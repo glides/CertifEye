@@ -1,0 +1,82 @@
+paths:
+  # Full CA logs for pruning (used by prune_dataset.py)
+  ca_logs_full_path: "C:/CA/exported_ca_logs.csv"
+
+  # Pruned CA logs for training (used by train_model.py)
+  ca_logs_pruned_path: "C:/CA/pruned_ca_logs.csv"
+
+  # CA logs for detection (used by certifeye.py)
+  # Can point to the full CA logs or to a file containing new requests
+  # ca_logs_detection_path: "C:/CA/exported_ca_logs.csv"
+  ca_logs_detection_path: "C:/CA/new_requests.csv"
+
+  model_output_path: "certifeye_model.joblib"
+  params_output_path: "certifeye_params.pkl"
+
+#known_abuse_request_ids: []  # Leave empty if no known abuse cases are available
+known_abuse_request_ids:
+  - 25611
+  - 34321
+  - 64308
+  - 64309
+  - 64490
+  - 64491
+  - 69306
+
+known_good_request_ids: #[]
+  # Add Request IDs of known good requests (false positives)
+  - 28311
+  - 28323
+  - 28609
+  # You can add more IDs here as you identify false positives
+
+privileged_keywords:
+  - "Administrator"
+  - "Admin"
+  - "Domain Admins"
+  - "Enterprise Admins"
+  - "Schema Admins"
+  - "krbtgt"
+  - "Root"
+  - "BackupAdmin"
+  - "SecurityAdmin"
+
+
+vulnerable_templates:
+  - "SubCA"
+  - "EnrollmentAgent"
+  - "EnrollmentAgentOffline"
+  - "DomainController"
+  - "DirectoryEmailReplication"
+  - "ESC1"
+  - "LegacySmartcardLogon"
+  - "ESC3"
+  - "ESC2"
+
+templates_requiring_approval: []
+  # Add templates if applicable
+#  - "SensitiveTemplate1"
+#  - "VPNUserCertificate"
+
+authorized_client_auth_users: []
+  # Add authorized users if applicable
+#  - "svc_account1"
+#  - "authorized_user"
+
+training_mode: "hybrid"  # Options: "supervised", "unsupervised", "hybrid"
+
+smtp:
+  server: 'smtp.yourdomain.com'
+  port: 587
+  username: 'alert@yourdomain.com'
+  password: 'your_password'  # Secure this appropriately
+  sender_email: 'alert@yourdomain.com'
+
+# Custom thresholds (optional)
+validity_threshold: 730  # Set validity threshold to 730 days (2 years)
+request_volume_threshold: 50  # Set request volume threshold
+classification_threshold: 0.625  # Set custom classification threshold
+
+# Off-hours definition (optional)
+off_hours_start: 22  # Off-hours start at 10 PM
+off_hours_end: 6     # Off-hours end at 6 AM
