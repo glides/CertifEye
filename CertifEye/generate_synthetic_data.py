@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 
 """
-CertifEye - Synthetic Data Generator
+Synthetic CA Log Data Generator
 Author: glides
 Version: 1.4
 
@@ -222,10 +222,14 @@ def generate_abuse_cases(num_abuses, used_request_ids, id_range_start, id_range_
                 abuse_ids.add(request_id)
                 break
 
-        # Deliberate abuse patterns
-        # Example: Privileged keyword in RequesterName and Certificate SANs
+        # Low-level requester
+        first_name = fake.first_name()
+        last_name = fake.last_name()
+        username = generate_username(first_name, last_name)
+        requester_name = f"{DOMAIN_NAME}\\{username}"
+
+        # Deliberate abuse patterns with high-level accounts in Subject/SANs
         privileged_keyword = random.choice(privileged_keywords)
-        requester_name = f"{DOMAIN_NAME}\\{privileged_keyword}{random.randint(1,99)}"
 
         # CertificateTemplate known to be vulnerable
         certificate_template = random.choice(vulnerable_templates)
@@ -235,7 +239,15 @@ def generate_abuse_cases(num_abuses, used_request_ids, id_range_start, id_range_
         certificate_subject = f"CN={certificate_issued_cn}"
 
         # CertificateSANs containing privileged keyword
-        certificate_sans = f"DNS:{privileged_keyword}.{DOMAIN_NAME}"
+        san_types = ['DNS', 'IP']
+        sans = []
+        for _ in range(random.randint(1, 3)):
+            san_type = random.choice(san_types)
+            if san_type == 'DNS':
+                sans.append(f"DNS:{privileged_keyword}.{DOMAIN_NAME}")
+            elif san_type == 'IP':
+                sans.append(f"IP:{fake.ipv4_private()}")
+        certificate_sans = ", ".join(sans)
 
         # EnhancedKeyUsage including sensitive usages
         eku_list = ["Client Authentication", "Server Authentication"]
@@ -365,8 +377,7 @@ if __name__ == '__main__':
 
         # Output known abuse Request IDs for training data
         training_abuse_ids_sorted = sorted(training_abuse_ids)
-        logger.info(f"Known abuse Request IDs for training data: {training_abuse_ids_sorted}")
-        print(f"{Fore.GREEN}Known abuse Request IDs for training data: {training_abuse_ids_sorted}{Style.RESET_ALL}")
+        logger.info(f"{Fore.GREEN}Known abuse Request IDs for training data: {training_abuse_ids_sorted}{Style.RESET_ALL}")
 
         # === Generate Detection Data ===
 
@@ -383,8 +394,16 @@ if __name__ == '__main__':
 
         # Output known abuse Request IDs for detection data
         detection_abuse_ids_sorted = sorted(detection_abuse_ids)
-        logger.info(f"Abuse Request IDs in detection data: {detection_abuse_ids_sorted}")
-        print(f"{Fore.GREEN}Abuse Request IDs in detection data: {detection_abuse_ids_sorted}{Style.RESET_ALL}")
+        logger.info(f"{Fore.GREEN}Abuse Request IDs in detection data: {detection_abuse_ids_sorted}{Style.RESET_ALL}")
+
+
+        # Output privileged keywords used
+        logger.info(f"{Fore.YELLOW}Privileged keywords used: {privileged_keywords}{Style.RESET_ALL}")
+
+
+        # Output vulnerable templates used
+        logger.info(f"{Fore.YELLOW}Vulnerable templates used: {vulnerable_templates}{Style.RESET_ALL}")
+
 
         logger.info("Synthetic data generation complete.")
 

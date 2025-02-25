@@ -1,5 +1,5 @@
 # certifeye.py
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -174,14 +174,15 @@ if __name__ == '__main__':
                 bar_format = (
                     f'{Fore.YELLOW}{{l_bar}}{Style.RESET_ALL}'  # Description in yellow
                     f'{Fore.GREEN}{{bar}}{Style.RESET_ALL}'     # Progress bar in green
-                    f'{Fore.CYAN}{{r_bar}}{Style.RESET_ALL}'    # Right part (percentage, time) in cyan
+                    f'{Fore.CYAN}{{r_bar}}{Style.RESET_ALL}'    # Right part (percentage, time, postfix) in cyan
                 )
                 request_iter = tqdm(
                     new_requests_df.iterrows(),
                     total=total_requests,
                     desc=f'{Fore.YELLOW}Processing Requests{Style.RESET_ALL}',
                     unit='request',
-                    bar_format=bar_format
+                    bar_format=bar_format,
+                    leave=True
                 )
             else:
                 request_iter = new_requests_df.iterrows()
@@ -220,6 +221,10 @@ if __name__ == '__main__':
                                    f"with probability {probability:.2f}{Style.RESET_ALL}")
                         logger.warning(message)
 
+                    # Update the progress bar postfix with the current abuse count
+                    if use_progress_bar:
+                                request_iter.set_postfix(Abuses=potential_abuses)
+
                     # Feature contributions
                     if args.show_features or is_abuse:
                         # Convert feature_values to DataFrame
@@ -244,8 +249,7 @@ if __name__ == '__main__':
                                 shap_values_class = shap_values[1]
                             else:
                                 # Multiclass classification
-                                # For simplicity, sum over all classes or select a specific one
-                                shap_values_class = shap_values[1]  # Choose class index 1 as an example
+                                shap_values_class = shap_values[1]  # Adjust as needed
                         else:
                             shap_values_class = shap_values  # For regression or single output
 
