@@ -13,6 +13,7 @@ An AI-powered detection system for identifying potential abuse of Active Directo
 - [Usage](#usage)
   - [Configuration File (`config.yaml`)](#configuration-file-configyaml)
   - [Exporting CA Logs Using PowerShell](#exporting-ca-logs-using-powershell)
+  - [Generating Synthetic Data](#generating-synthetic-data)
   - [Training the Model](#training-the-model)
   - [Detecting Abuse](#detecting-abuse)
 - [Sample Data](#sample-data)
@@ -35,18 +36,17 @@ An AI-powered detection system for identifying potential abuse of Active Directo
 
 ```
 CertifEye/
-├── certifeye.py             # Main script for detecting abuse
-├── prune_data.py            # Script to assist pruning a large dataset for training the model
-├── train_model.py           # Script for training the machine learning model
-├── certifeye_utils.py       # Utility functions used across scripts
-├── config.yaml              # Configuration file in YAML format
-├── requirements.txt         # Python package dependencies
-├── scripts/                 # Directory for scripts
-│   └── Export-CALogs.ps1    # PowerShell script to export CA logs
-SampleData/
-├── sample_ca_logs.csv       # Sample CA log data for testing
-LICENSE.md                   # Project license (MIT License)
-README.md                    # This README file
+├── certifeye.py                 # Main script for detecting abuse
+├── prune_data.py                # Script to assist pruning a large dataset for training
+├── train_model.py               # Script for training the machine learning model
+├── generate_synthetic_data.py   # Script to generate synthetic CA log data
+├── certifeye_utils.py           # Utility functions used across scripts
+├── config.yaml                  # Configuration file in YAML format
+├── requirements.txt             # Python package dependencies
+├── scripts/                     # Directory for scripts
+│   └── Export-CALogs.ps1        # PowerShell script to export CA logs
+LICENSE.md                       # Project license (MIT License)
+README.md                        # This README file
 ```
 
 ---
@@ -60,11 +60,11 @@ README.md                    # This README file
   - **ESC4**: Unauthorized Accounts Enrolling for Certificates with Client Authentication
   - **ESC6**: Abuse of Certificate Request Agent Permissions
 - **Hybrid Machine Learning Approach**: Supports both supervised and unsupervised learning methods for anomaly detection.
+- **Synthetic Data Generation**: Provides a script to generate synthetic CA log data with configurable known abuses for testing and training.
 - **Real-Time Monitoring**: Continuously scans CA logs to detect potential abuse as it happens.
 - **Privileged Account Detection**: Flags certificates issued to high-privilege accounts.
 - **Time-Based Anomalies**: Identifies requests made during unusual hours or at abnormal frequencies.
 - **Template Vulnerability Identification**: Detects usage of vulnerable or misconfigured certificate templates.
-- **Synthetic Data Augmentation**: Uses techniques like SMOTE to address class imbalance in supervised learning.
 - **Comprehensive Logging**: Provides detailed logs for auditing and analysis.
 - **Integration Ready**: Easily integrates with SIEM and SOAR platforms for centralized monitoring and automated response.
 - **Customizable Alerts**: Configurable alerting mechanisms, including email notifications.
@@ -198,9 +198,95 @@ We have provided a PowerShell script `Export-CALogs.ps1` in the `scripts` direct
 
 - **Compliance**: Ensure that exporting and analyzing CA logs complies with your organization's policies and any relevant regulations.
 
+### Generating Synthetic Data
+
+For testing and demonstration purposes, CertifEye includes a script to generate synthetic CA log data: `generate_synthetic_data.py`.
+
+This script creates synthetic datasets that mimic real CA logs, including known abuse cases, without containing any sensitive information.
+
+#### **Usage**
+
+1. **Run the Script**
+
+   ```bash
+   python generate_synthetic_data.py
+   ```
+
+2. **Command-Line Arguments**
+
+   The script accepts optional command-line arguments to configure the number of records and abuses:
+
+   ```bash
+   python generate_synthetic_data.py -tr 1000 -ta 6 -dr 5000 -da 20
+   ```
+
+   - `-tr`, `--train_records`: Number of training records to generate (default: 1000).
+   - `-ta`, `--train_abuses`: Number of known abuses for training (default: 6).
+   - `-dr`, `--detect_records`: Number of detection records to generate (default: 5000).
+   - `-da`, `--detect_abuses`: Number of abuses in detection data (default: 20).
+   - `-v`, `--verbose`: Enable verbose output.
+
+3. **Script Output**
+
+   The script will generate two CSV files:
+
+   - `synthetic_ca_logs_training.csv`: Synthetic training data with known abuses.
+   - `synthetic_ca_logs_detection.csv`: Synthetic detection data with abuses randomly distributed.
+
+   It will also output the known abuse Request IDs to the console and log:
+
+   ```
+   Known abuse Request IDs for training data: [10571, 10901, 11479, 12401, 12570, 12781]
+   Abuse Request IDs in detection data: [20714, 20763, 21016, ..., 24911]
+   ```
+
+4. **Update `config.yaml`**
+
+   - Use the known abuse Request IDs from the training data to populate `known_abuse_request_ids` in your `config.yaml`:
+
+     ```yaml
+     known_abuse_request_ids:
+       - 10571
+       - 10901
+       - 11479
+       - 12401
+       - 12570
+       - 12781
+     ```
+
+#### **Customization**
+
+- **Domain Name**
+
+  - Adjust the `DOMAIN_NAME` variable in the script to change the domain used in the synthetic data.
+
+- **Naming Conventions**
+
+  - Modify the username and machine name generation functions to match specific naming conventions.
+
+- **SAN Variability**
+
+  - Expand or adjust the types of Subject Alternative Names (SANs) generated to suit your testing needs.
+
+- **Certificate Templates and EKUs**
+
+  - Update the lists of certificate templates and Enhanced Key Usages (EKUs) to reflect your environment.
+
+#### **Integration with CertifEye**
+
+- **Training the Model**
+
+  - Use `synthetic_ca_logs_training.csv` as the training dataset.
+  - Ensure `known_abuse_request_ids` in `config.yaml` are set correctly.
+
+- **Detecting Abuse**
+
+  - Use `synthetic_ca_logs_detection.csv` as the detection dataset.
+  - Run `certifeye.py` to process the detection data.
+
 ### Training the Model
 
-With the comprehensive CA logs exported and `config.yaml` configured, you can now train the machine learning model.
+With comprehensive CA logs (or synthetic data) and `config.yaml` configured, you can now train the machine learning model.
 
 1. **Set the Training Mode**
 
@@ -235,32 +321,6 @@ With the comprehensive CA logs exported and `config.yaml` configured, you can no
 
    - Update SMTP settings in `config.yaml`.
    - Uncomment the `send_alert` line in `certifeye.py` to enable email notifications when potential abuse is detected.
-
----
-
-## Notes on Detection
-
-- **Anomaly Scores**:
-
-  - In **unsupervised** mode, the model outputs anomaly scores instead of probabilities. Higher scores indicate a higher likelihood of anomalies.
-  - The `abuse_prob` value in notifications represents the anomaly score.
-
-- **Hybrid Approach**:
-
-  - Combining supervised and unsupervised methods can enhance detection capabilities by leveraging both labeled data and anomaly detection techniques.
-  - In **hybrid** mode, the supervised model will be trained on known abuse cases (if provided), while the unsupervised model will detect novel anomalies.
-
-- **Alerts**:
-
-  - Alerts will include the anomaly score or probability to help you assess the severity of the detected anomalies or potential abuses.
-
----
-
-## Sample Data
-
-A sample dataset (`sample_ca_logs.csv`) is provided in the `SampleData` directory for testing and demonstration purposes. This dataset includes both normal and abuse cases to help you understand how CertifEye processes and detects potential abuses.
-
-**Note:** The sample data is fictional. In practice, you should use your own CA logs for accurate detection.
 
 ---
 
@@ -359,4 +419,41 @@ This project is licensed under the terms of the [MIT License](LICENSE.md).
 
 We appreciate the contributions from the open-source community and the support of our dedicated team members who made this project possible.
 
-```
+---
+
+**Note:** For detailed information on each script and its usage, please refer to the comments within the scripts and ensure you have configured `config.yaml` appropriately.
+
+---
+
+# Quick Start Guide
+
+1. **Generate Synthetic Data (Optional)**
+
+   - If you don't have real CA logs, generate synthetic data:
+
+     ```bash
+     python generate_synthetic_data.py
+     ```
+
+   - Update `config.yaml` with the paths to the synthetic data and known abuse Request IDs.
+
+2. **Train the Model**
+
+   ```bash
+   python train_model.py
+   ```
+
+3. **Run Detection**
+
+   ```bash
+   python certifeye.py
+   ```
+
+4. **Review Logs**
+
+   - Check `train_model.log` and `certifeye.log` for detailed information.
+   - Review alerts and SHAP feature contributions to understand the model's decisions.
+
+---
+
+For any issues or questions, please open an issue on the GitHub repository or reach out to the project maintainers.
