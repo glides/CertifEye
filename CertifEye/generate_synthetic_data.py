@@ -5,7 +5,7 @@
 """
 Synthetic CA Log Data Generator
 Author: glides
-Version: 1.4
+Version: 0.9
 
 This script generates synthetic CA log data similar in structure to the original data,
 without including any sensitive information. It generates training and detection datasets
@@ -364,7 +364,7 @@ if __name__ == '__main__':
 
         # === Generate Training Data ===
 
-        logger.info(f"Generating training data with {args.train_records} records and {args.train_abuses} known abuses...")
+        logger.info(f"{Fore.WHITE}Generating training data with {args.train_records} records and {args.train_abuses} known abuses...{Style.RESET_ALL}")
         # Place known abuses at the end of training data
         training_data, training_abuse_ids = generate_synthetic_ca_logs(
             num_records=args.train_records + args.train_abuses,
@@ -372,16 +372,10 @@ if __name__ == '__main__':
             abuses_randomized=False,
             start_request_id=10000
         )
-        training_data.to_csv("synthetic_ca_logs_training.csv", index=False)
-        logger.info("Training data saved to 'synthetic_ca_logs_training.csv'")
-
-        # Output known abuse Request IDs for training data
-        training_abuse_ids_sorted = sorted(training_abuse_ids)
-        logger.info(f"{Fore.GREEN}Known abuse Request IDs for training data: {training_abuse_ids_sorted}{Style.RESET_ALL}")
 
         # === Generate Detection Data ===
 
-        logger.info(f"Generating detection data with {args.detect_records} records and {args.detect_abuses} abuses...")
+        logger.info(f"{Fore.WHITE}Generating detection data with {args.detect_records} records and {args.detect_abuses} abuses...{Style.RESET_ALL}")
         # Randomize abuses in detection data
         detection_data, detection_abuse_ids = generate_synthetic_ca_logs(
             num_records=args.detect_records,
@@ -389,23 +383,34 @@ if __name__ == '__main__':
             abuses_randomized=True,
             start_request_id=20000  # Ensure RequestIDs do not overlap with training data
         )
-        detection_data.to_csv("synthetic_ca_logs_detection.csv", index=False)
-        logger.info("Detection data saved to 'synthetic_ca_logs_detection.csv'")
+
+        # === Output Summary ===
+
+        # Output known abuse Request IDs for training data
+        training_abuse_ids_sorted = sorted(training_abuse_ids)
+        logger.info(f"{Fore.WHITE}\nKnown abuse Request IDs for training data: {Fore.CYAN}{training_abuse_ids_sorted}{Style.RESET_ALL}")
+
 
         # Output known abuse Request IDs for detection data
         detection_abuse_ids_sorted = sorted(detection_abuse_ids)
-        logger.info(f"{Fore.GREEN}Abuse Request IDs in detection data: {detection_abuse_ids_sorted}{Style.RESET_ALL}")
+        logger.info(f"{Fore.WHITE}Abuse Request IDs in detection data: {Fore.YELLOW}{detection_abuse_ids_sorted}{Style.RESET_ALL}{Style.RESET_ALL}")
 
 
         # Output privileged keywords used
-        logger.info(f"{Fore.YELLOW}Privileged keywords used: {privileged_keywords}{Style.RESET_ALL}")
+        logger.info(f"{Fore.WHITE}Privileged keywords used: {Fore.LIGHTBLACK_EX}{privileged_keywords}{Style.RESET_ALL}")
 
 
         # Output vulnerable templates used
-        logger.info(f"{Fore.YELLOW}Vulnerable templates used: {vulnerable_templates}{Style.RESET_ALL}")
+        logger.info(f"{Fore.WHITE}Vulnerable templates used: {Fore.LIGHTBLACK_EX}{vulnerable_templates}{Style.RESET_ALL}")
 
 
-        logger.info("Synthetic data generation complete.")
+        # === Save Data ===
+       
+        training_data.to_csv("synthetic_ca_logs_training.csv", index=False)
+        logger.info(f"{Fore.GREEN}\nTraining data saved to {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_training.csv'{Style.RESET_ALL}")
+
+        detection_data.to_csv("synthetic_ca_logs_detection.csv", index=False)
+        logger.info(f"{Fore.GREEN}Detection data saved to: {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_detection.csv'{Style.RESET_ALL}")
 
     except KeyboardInterrupt:
         print(f"{Fore.RED}\nOperation cancelled by user. Exiting gracefully.{Style.RESET_ALL}")

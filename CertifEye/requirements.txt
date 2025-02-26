@@ -6,3 +6,4 @@ PyYAML
 joblib
 tqdm
 shap
+faker

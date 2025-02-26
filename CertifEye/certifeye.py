@@ -5,7 +5,7 @@
 """
 CertifEye - AD CS Abuse Detection Script
 Author: glides
-Version: 1.0
+Version: 0.9
 
 This script detects potential abuses of Active Directory Certificate Services.
 """
@@ -42,6 +42,7 @@ init(autoreset=True)
 
 parser = argparse.ArgumentParser(description='CertifEye - AD CS Abuse Detection Tool')
 parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+parser.add_argument('-r', '--redact', action='store_true', help='Redact sensitive data in logs/output')
 parser.add_argument('-f', '--show-features', action='store_true', help='Show feature contributions for all requests')
 args = parser.parse_args()
 
@@ -97,10 +98,10 @@ if __name__ == '__main__':
         classification_threshold = config.get('classification_threshold', 0.5)  # Default to 0.5 if not set
 
         # Load Trained Model and Parameters
-        logger.info("Loading trained model from %s", model_output_path)
+        logger.info(f"{Fore.WHITE}Loading trained model from: {Fore.LIGHTBLACK_EX}%s{Style.RESET_ALL}", model_output_path)
         clf = joblib.load(model_output_path)
 
-        logger.info("Loading parameters from %s", params_output_path)
+        logger.info(f"{Fore.WHITE}Loading parameters from: {Fore.LIGHTBLACK_EX}%s{Style.RESET_ALL}", params_output_path)
         with open(params_output_path, 'rb') as f:
             params = pickle.load(f)
 
@@ -123,7 +124,7 @@ if __name__ == '__main__':
         classifier = clf.named_steps['classifier']
 
         # === Check the Classes Known to the Classifier ===
-        logger.info(f"Classifier classes: {classifier.classes_}")
+        logger.debug(f"Classifier classes: {classifier.classes_}")
 
         # === Load SHAP Explainer ===
         # Initialize the SHAP TreeExplainer with the classifier
@@ -131,7 +132,7 @@ if __name__ == '__main__':
 
         # === Load New Requests from CSV ===
 
-        logger.info("Loading CA logs for detection from %s", ca_logs_detection_path)
+        logger.info(f"{Fore.WHITE}Loading CA logs for detection from: {Fore.LIGHTBLACK_EX}%s{Style.RESET_ALL}", ca_logs_detection_path)
 
         # Read the CSV file
         try:
@@ -162,7 +163,7 @@ if __name__ == '__main__':
             logger.warning("No new requests to process.")
         else:
             total_requests = len(new_requests_df)
-            logger.info(f"Processing {total_requests} new certificate requests.")
+            logger.info(f"{Fore.CYAN}Processing {total_requests} new certificate requests.{Style.RESET_ALL}")
 
             potential_abuses = 0  # Counter for detected abuses
 
@@ -174,12 +175,12 @@ if __name__ == '__main__':
                 bar_format = (
                     f'{Fore.YELLOW}{{l_bar}}{Style.RESET_ALL}'  # Description in yellow
                     f'{Fore.GREEN}{{bar}}{Style.RESET_ALL}'     # Progress bar in green
-                    f'{Fore.CYAN}{{r_bar}}{Style.RESET_ALL}'    # Right part (percentage, time, postfix) in cyan
+                    f'{Fore.LIGHTBLACK_EX}{{r_bar}}{Style.RESET_ALL}'    # Right part (percentage, time, postfix) in grey
                 )
                 request_iter = tqdm(
                     new_requests_df.iterrows(),
                     total=total_requests,
-                    desc=f'{Fore.YELLOW}Processing Requests{Style.RESET_ALL}',
+                    desc=f'Processing Requests{Style.RESET_ALL}',
                     unit='request',
                     bar_format=bar_format,
                     leave=True
@@ -220,6 +221,39 @@ if __name__ == '__main__':
                         message = (f"{Fore.RED}Potential abuse detected for Request ID {request_id} "
                                    f"with probability {probability:.2f}{Style.RESET_ALL}")
                         logger.warning(message)
+
+                        # Sanitize the request data before printing
+                        sanitized_request_dict = sanitize_request_data(new_request_dict)
+
+                        if args.redact:
+                            # Print out the sanitized requester of the certificate and the Subject, SAN, Common Name, EKUs, and Request Date
+                            logger.info(f"{Fore.WHITE}Requester Name: {Fore.LIGHTBLACK_EX}{sanitized_request_dict['RequesterName']}{Style.RESET_ALL}")
+                            logger.info(f"{Fore.WHITE}Certificate Subject: {Fore.LIGHTBLACK_EX}{sanitized_request_dict['CertificateSubject']}{Style.RESET_ALL}")
+                            logger.info(f"{Fore.WHITE}Certificate SANs: {Fore.LIGHTBLACK_EX}{sanitized_request_dict['CertificateSANs']}{Style.RESET_ALL}")
+                            logger.info(f"{Fore.WHITE}Issued Common Name: {Fore.LIGHTBLACK_EX}{sanitized_request_dict['CertificateIssuedCommonName']}{Style.RESET_ALL}")
+                            #logger.info(f"Template: {sanitized_request_dict['CertificateTemplate']}")
+                            #logger.info(f"Valid From: {sanitized_request_dict['CertificateValidityStart']}")
+                            #logger.info(f"Valid To: {sanitized_request_dict['CertificateValidityEnd']}")
+                            logger.info(f"{Fore.WHITE}EKUs: {Fore.LIGHTBLACK_EX}{sanitized_request_dict['EnhancedKeyUsage']}{Style.RESET_ALL}")
+                            #logger.info(f"Disposition: {sanitized_request_dict['RequestDisposition']}")
+                            logger.info(f"{Fore.WHITE}Request Date: {Fore.LIGHTBLACK_EX}{sanitized_request_dict['RequestSubmissionTime']}{Style.RESET_ALL}")
+                        else:
+                            # Print out the requester of the certificate and the Subject, SAN, Common Name, Template, Validity, EKUs, Disposition, and Request Date
+                            logger.info(f"{Fore.WHITE}Requester Name: {Fore.LIGHTBLACK_EX}{new_request_dict['RequesterName']}{Style.RESET_ALL}")
+                            logger.info(f"{Fore.WHITE}Certificate Subject: {Fore.LIGHTBLACK_EX}{new_request_dict['CertificateSubject']}{Style.RESET_ALL}")
+                            logger.info(f"{Fore.WHITE}Certificate SANs: {Fore.LIGHTBLACK_EX}{new_request_dict['CertificateSANs']}{Style.RESET_ALL}")
+                            logger.info(f"{Fore.WHITE}Issued Common Name: {Fore.LIGHTBLACK_EX}{new_request_dict['CertificateIssuedCommonName']}{Style.RESET_ALL}")
+                            #logger.info(f"Template: {new_request_dict['CertificateTemplate']}")
+                            #logger.info(f"Valid From: {new_request_dict['CertificateValidityStart']}")
+                            #logger.info(f"Valid To: {new_request_dict['CertificateValidityEnd']}")
+                            logger.info(f"{Fore.WHITE}EKUs: {Fore.LIGHTBLACK_EX}{new_request_dict['EnhancedKeyUsage']}{Style.RESET_ALL}")
+                            #logger.info(f"Disposition: {new_request_dict['RequestDisposition']}")
+                            logger.info(f"{Fore.WHITE}Request Date: {Fore.LIGHTBLACK_EX}{new_request_dict['RequestSubmissionTime']}{Style.RESET_ALL}")
+
+                            
+
+
+                            
 
                     # Update the progress bar postfix with the current abuse count
                     if use_progress_bar:
@@ -262,7 +296,7 @@ if __name__ == '__main__':
                         shap_values_dict = dict(zip(feature_values_df.columns, shap_values_sample))
 
                         # Output detailed feature contributions in grey
-                        logger.info(f"{Fore.YELLOW}Feature contributions for Request ID {request_id}:{Style.RESET_ALL}")
+                        logger.debug(f"{Fore.YELLOW}Feature contributions for Request ID {request_id}:{Style.RESET_ALL}")
                         for feature_name in feature_values_df.columns:
                             feature_value = feature_values_df[feature_name].iloc[0]
                             shap_value = shap_values_dict.get(feature_name)
@@ -270,13 +304,14 @@ if __name__ == '__main__':
                                 # Ensure shap_value is a scalar float
                                 shap_value_scalar = float(shap_value)
                                 # Output in grey
-                                logger.info(f"{Fore.LIGHTBLACK_EX}  {feature_name}: Value={feature_value}, Contribution={shap_value_scalar:.6f}{Style.RESET_ALL}")
+                                logger.debug(f"{Fore.LIGHTBLACK_EX}  {feature_name}: Value={feature_value}, Contribution={shap_value_scalar:.6f}{Style.RESET_ALL}")
                             else:
                                 logger.warning(f"  {feature_name}: SHAP value not available.")
 
                     elif args.verbose:
-                        # If verbose mode is on, log non-abuse cases if desired
-                        logger.debug(f"No abuse detected for Request ID {request_id}.")
+                        pass
+                        # If verbose mode is on, log non-abuse cases if desired (this is spammy)
+                        # logger.debug(f"No abuse detected for Request ID {request_id}.")
 
                 except Exception as e:
                     logger.error(f"Error processing Request ID {request_id}: {e}", exc_info=True)

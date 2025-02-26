@@ -5,7 +5,7 @@
 """
 CertifEye - Model Training Script
 Author: glides
-Version: 1.0
+Version: 0.9
 
 This script trains a machine learning model to detect potential abuses of Active Directory Certificate Services.
 """
@@ -135,7 +135,7 @@ if __name__ == '__main__':
             logger.error(f"{Fore.RED}CA logs DataFrame is empty. No data to train the model.{Style.RESET_ALL}")
             sys.exit(1)
 
-        logger.info(f"{Fore.CYAN}Loaded CA logs with {len(df)} records.{Style.RESET_ALL}")
+        logger.info(f"{Fore.WHITE}Loaded CA logs with {len(df)} records.{Style.RESET_ALL}")
 
         # === Feature Engineering ===
 
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         initial_record_count = len(df)
         df.dropna(subset=date_columns, inplace=True)
         after_drop_count = len(df)
-        logger.info(f"Dropped {initial_record_count - after_drop_count} records due to invalid dates.")
+        logger.debug(f"Dropped {initial_record_count - after_drop_count} records due to invalid dates.")
 
         if df.empty:
             logger.error(f"{Fore.RED}All records were dropped due to invalid dates.{Style.RESET_ALL}")
@@ -198,9 +198,9 @@ if __name__ == '__main__':
 
         if validity_threshold is None:
             validity_threshold = df['CertificateValidityDuration'].mean() + 3 * df['CertificateValidityDuration'].std()
-            logger.info(f"Calculated validity duration threshold: {validity_threshold:.2f} days.")
+            logger.debug(f"Calculated validity duration threshold: {validity_threshold:.2f} days.")
         else:
-            logger.info(f"Using custom validity duration threshold: {validity_threshold} days.")
+            logger.debug(f"Using custom validity duration threshold: {validity_threshold} days.")
 
         df['Unusual_Validity_Period'] = df['CertificateValidityDuration'].apply(
             lambda x: 1 if x > validity_threshold else 0
@@ -218,9 +218,9 @@ if __name__ == '__main__':
 
         if request_volume_threshold is None:
             request_volume_threshold = df['Requests_Per_Hour'].mean() + 3 * df['Requests_Per_Hour'].std()
-            logger.info(f"Calculated request volume threshold: {request_volume_threshold:.2f} requests per hour.")
+            logger.debug(f"Calculated request volume threshold: {request_volume_threshold:.2f} requests per hour.")
         else:
-            logger.info(f"Using custom request volume threshold: {request_volume_threshold} requests per hour.")
+            logger.debug(f"Using custom request volume threshold: {request_volume_threshold} requests per hour.")
 
         df['High_Request_Volume'] = df['Requests_Per_Hour'].apply(
             lambda x: 1 if x > request_volume_threshold else 0
@@ -261,7 +261,7 @@ if __name__ == '__main__':
         # === Training Mode Selection ===
 
         if training_mode in ['supervised', 'hybrid']:
-            logger.info(f"{Fore.CYAN}Supervised learning mode activated.{Style.RESET_ALL}")
+            logger.info(f"{Fore.WHITE}Supervised learning mode activated.{Style.RESET_ALL}")
 
             # Add 'Abuse_Flag' column with default value 0
             df['Abuse_Flag'] = 0
@@ -276,8 +276,8 @@ if __name__ == '__main__':
 
             # Check class distribution
             class_counts = y.value_counts()
-            logger.info("Class distribution before oversampling:")
-            logger.info(f"\n{class_counts}")
+            logger.debug("Class distribution before oversampling:")
+            logger.debug(f"\n{class_counts}")
 
             # Handle imbalanced classes
             if class_counts.min() < 6:
@@ -290,19 +290,19 @@ if __name__ == '__main__':
                 smote = SMOTE(random_state=42)
                 X_resampled, y_resampled = smote.fit_resample(X, y)
                 synthetic_samples = len(X_resampled) - len(X)
-                logger.info(f"SMOTE generated {synthetic_samples} synthetic samples.")
+                logger.info(f"{Fore.CYAN}SMOTE generated {synthetic_samples} synthetic samples.{Style.RESET_ALL}")
 
             # Check class distribution after oversampling
             resampled_class_counts = pd.Series(y_resampled).value_counts()
-            logger.info("Class distribution after oversampling:")
-            logger.info(f"\n{resampled_class_counts}")
+            logger.debug("Class distribution after oversampling:")
+            logger.debug(f"\n{resampled_class_counts}")
 
             # === Split Data ===
 
             X_train, X_test, y_train, y_test = train_test_split(
                 X_resampled, y_resampled, test_size=0.2, random_state=42
             )
-            logger.info(f"Training data size: {len(X_train)}, Test data size: {len(X_test)}")
+            logger.debug(f"Training data size: {len(X_train)}, Test data size: {len(X_test)}")
 
             # === Create a Pipeline with Grid Search ===
 
@@ -330,7 +330,7 @@ if __name__ == '__main__':
 
             # Fit grid search
             grid_search.fit(X_train, y_train)
-            logger.info(f"{Fore.GREEN}Best parameters found: {grid_search.best_params_}{Style.RESET_ALL}")
+            logger.debug(f"{Fore.GREEN}Best parameters found: {grid_search.best_params_}{Style.RESET_ALL}")
 
             # Best estimator
             pipeline = grid_search.best_estimator_
@@ -340,26 +340,26 @@ if __name__ == '__main__':
             y_pred = pipeline.predict(X_test)
             y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
 
-            logger.info("Classification Report:")
+            logger.debug("Classification Report:")
             report = classification_report(y_test, y_pred)
-            logger.info(f"\n{report}")
+            logger.debug(f"\n{report}")
 
-            logger.info("Confusion Matrix:")
+            logger.debug("Confusion Matrix:")
             cm = confusion_matrix(y_test, y_pred)
-            logger.info(f"\n{cm}")
+            logger.debug(f"\n{cm}")
 
             roc_auc = roc_auc_score(y_test, y_pred_proba)
-            logger.info(f"ROC AUC Score: {roc_auc:.2f}")
+            logger.info(f"{Fore.WHITE}ROC AUC Score:{Fore.LIGHTBLACK_EX}{roc_auc:.2f}{Style.RESET_ALL}")
 
             # Precision-Recall Curve AUC
             precision, recall, _ = precision_recall_curve(y_test, y_pred_proba)
             pr_auc = auc(recall, precision)
-            logger.info(f"Precision-Recall AUC Score: {pr_auc:.2f}")
+            logger.info(f"{Fore.WHITE}Precision-Recall AUC Score: {Fore.LIGHTBLACK_EX}{pr_auc:.2f}{Style.RESET_ALL}")
 
             # Cross-Validation Scores
             cv_scores = cross_val_score(pipeline, X_resampled, y_resampled, cv=5, scoring='roc_auc')
-            logger.info(f"Cross-validated ROC AUC scores: {cv_scores}")
-            logger.info(f"Mean ROC AUC: {np.mean(cv_scores):.2f}")
+            logger.info(f"{Fore.WHITE}Cross-validated ROC AUC scores: {Fore.LIGHTBLACK_EX}{cv_scores}{Style.RESET_ALL}")
+            logger.info(f"{Fore.WHITE}Mean ROC AUC: {Fore.LIGHTBLACK_EX}{np.mean(cv_scores):.2f}{Style.RESET_ALL}")
 
             # === Feature Importance Analysis ===
 
@@ -371,8 +371,8 @@ if __name__ == '__main__':
                 'Importance': importances
             }).sort_values(by='Importance', ascending=False)
 
-            logger.info("Feature Importances:")
-            logger.info(f"\n{feature_importance_df}")
+            logger.debug(f"{Fore.YELLOW}Feature Importances:{Style.RESET_ALL}")
+            logger.debug(f"{Fore.LIGHTYELLOW_EX}\n{feature_importance_df}{Style.RESET_ALL}")
 
         else:
             logger.info(f"{Fore.CYAN}Unsupervised learning mode activated.{Style.RESET_ALL}")
@@ -389,7 +389,7 @@ if __name__ == '__main__':
         # === Save the Trained Model and Parameters ===
 
         joblib.dump(pipeline, model_output_path)
-        logger.info(f"{Fore.GREEN}Model saved to {model_output_path}{Style.RESET_ALL}")
+        logger.info(f"{Fore.GREEN}Model saved to: {Fore.LIGHTBLACK_EX}{model_output_path}{Style.RESET_ALL}")
 
         with open(params_output_path, 'wb') as f:
             pickle.dump({
@@ -402,7 +402,7 @@ if __name__ == '__main__':
                 'training_mode': training_mode,
                 'disposition_categories': disposition_categories  # Use the variable saved before encoding
             }, f)
-        logger.info(f"{Fore.GREEN}Parameters saved to {params_output_path}{Style.RESET_ALL}")
+        logger.info(f"{Fore.GREEN}Parameters saved to: {Fore.LIGHTBLACK_EX}{params_output_path}{Style.RESET_ALL}")
 
     except KeyboardInterrupt:
         print(f"{Fore.RED}\nOperation cancelled by user. Exiting gracefully.{Style.RESET_ALL}")

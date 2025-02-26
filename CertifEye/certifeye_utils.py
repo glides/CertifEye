@@ -31,20 +31,19 @@ logger = logging.getLogger('CertifEye-Utils')
 def print_banner():
     ascii_banner = f"""
 {Fore.CYAN}
-       ___         _   _  __ ___         
-      / __|___ _ _| |_(_)/ _| __|  _ ___ 
-     | (__/ -_) '_|  _| |  _| _| || / -_)
-      \\___\\___|_|  \\__|_|_| |___\\_, \\___|
-                                |__/     
+{Fore.CYAN}   ___         _   _  __{Fore.YELLOW} ___         
+{Fore.CYAN}  / __|___ _ _| |_(_)/ _{Fore.YELLOW}| __|  _ ___ 
+{Fore.CYAN} | (__/ -_) '_|  _| |  _{Fore.YELLOW}| _| || / -_)
+{Fore.CYAN}  \\___\\___|_|  \\__|_|_|{Fore.YELLOW} |___\\_, \\___|
+{Fore.CYAN}                        {Fore.YELLOW}    |__/     
 {Style.RESET_ALL}
     """
-    tagline = f"{Fore.YELLOW}CertifEye - An AD CS Abuse Detection Tool{Style.RESET_ALL}"
-    author = f"{Fore.GREEN}Author: glides{Style.RESET_ALL}"
-    version = f"{Fore.GREEN}Version: 1.0{Style.RESET_ALL}"
+    tagline = f"{Fore.CYAN}Certif{Fore.YELLOW}Eye{Style.RESET_ALL} -{Fore.LIGHTBLACK_EX} An AD CS Abuse Detection Tool\n{Style.RESET_ALL}"
+    author = f"{Fore.WHITE}Author: {Fore.LIGHTBLACK_EX}glides <glid3s@protonmail.com>{Style.RESET_ALL}"
+    version = f"{Fore.WHITE}Version: {Fore.LIGHTBLACK_EX}0.9\n{Style.RESET_ALL}"
 
     print(ascii_banner)
     print(tagline)
-    print()
     print(author)
     print(version)
 

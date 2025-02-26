@@ -16,7 +16,6 @@ An AI-powered detection system for identifying potential abuse of Active Directo
   - [Generating Synthetic Data](#generating-synthetic-data)
   - [Training the Model](#training-the-model)
   - [Detecting Abuse](#detecting-abuse)
-- [Sample Data](#sample-data)
 - [Implementation Examples](#implementation-examples)
   - [Integration with SIEM Platforms](#integration-with-siem-platforms)
   - [Automated Alerting](#automated-alerting)
@@ -422,37 +421,6 @@ We appreciate the contributions from the open-source community and the support o
 ---
 
 **Note:** For detailed information on each script and its usage, please refer to the comments within the scripts and ensure you have configured `config.yaml` appropriately.
-
----
-
-# Quick Start Guide
-
-1. **Generate Synthetic Data (Optional)**
-
-   - If you don't have real CA logs, generate synthetic data:
-
-     ```bash
-     python generate_synthetic_data.py
-     ```
-
-   - Update `config.yaml` with the paths to the synthetic data and known abuse Request IDs.
-
-2. **Train the Model**
-
-   ```bash
-   python train_model.py
-   ```
-
-3. **Run Detection**
-
-   ```bash
-   python certifeye.py
-   ```
-
-4. **Review Logs**
-
-   - Check `train_model.log` and `certifeye.log` for detailed information.
-   - Review alerts and SHAP feature contributions to understand the model's decisions.
 
 ---
 

@@ -5,7 +5,7 @@
 """
 CertifEye - Data Pruning Script
 Author: glides
-Version: 1.0
+Version: 0.9
 
 This script prunes a large CA logs dataset to create a manageable subset for model training.
 """
@@ -83,7 +83,7 @@ if __name__ == '__main__':
         df_full = pd.read_csv(ca_logs_full_path)
         df_full['RequestID'] = df_full['RequestID'].astype(int)
 
-        logger.info(f"{Fore.CYAN}Loaded full CA logs with {len(df_full)} records.{Style.RESET_ALL}")
+        logger.info(f"{Fore.WHITE}Loaded CA logs with {len(df_full)} records from: {Fore.LIGHTBLACK_EX}{ca_logs_full_path}{Style.RESET_ALL}")
 
         # === Split the Data ===
 
@@ -109,20 +109,21 @@ if __name__ == '__main__':
         # Combine the sampled normal requests with known abuse and known good instances
         df_combined = pd.concat([df_normal_sampled, df_abuse, df_known_good])
 
-        # Save the combined dataset to the pruned CA logs path
-        df_combined.to_csv(ca_logs_pruned_path, index=False)
-        logger.info(f"{Fore.GREEN}Combined dataset saved to {ca_logs_pruned_path}{Style.RESET_ALL}")
-
-        # Optional: Verify the counts
+        # Verify the counts
         total_records = len(df_combined)
         normal_requests = len(df_normal_sampled)
         abuse_requests = len(df_abuse)
         known_good_requests = len(df_known_good)
 
-        logger.info(f"{Fore.CYAN}Total records in combined dataset: {total_records}{Style.RESET_ALL}")
-        logger.info(f"Number of normal requests: {normal_requests}")
-        logger.info(f"Number of known abuse requests: {abuse_requests}")
-        logger.info(f"Number of known good requests: {known_good_requests}")
+        # Print the counts
+        logger.info(f"{Fore.YELLOW}Total records in combined dataset: {Fore.LIGHTBLACK_EX}{total_records}{Style.RESET_ALL}")
+        logger.info(f"{Fore.WHITE}Normal requests: {Fore.LIGHTBLACK_EX}{normal_requests}")
+        logger.info(f"{Fore.WHITE}Known abuse requests: {Fore.LIGHTBLACK_EX}{abuse_requests}")
+        logger.info(f"{Fore.WHITE}Known good requests: {Fore.LIGHTBLACK_EX}{known_good_requests}")
+
+        # Save the combined dataset to the pruned CA logs path
+        df_combined.to_csv(ca_logs_pruned_path, index=False)
+        logger.info(f"{Fore.GREEN}Combined dataset saved to: {Fore.LIGHTBLACK_EX}{ca_logs_pruned_path}{Style.RESET_ALL}")
 
     except KeyboardInterrupt:
         print(f"{Fore.RED}\nOperation cancelled by user. Exiting gracefully.{Style.RESET_ALL}")
