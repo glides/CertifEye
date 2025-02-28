@@ -11,14 +11,11 @@ An AI-powered detection system for identifying potential abuse of Active Directo
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Configuration File (`config.yaml`)](#configuration-file-configyaml)
-  - [Exporting CA Logs Using PowerShell](#exporting-ca-logs-using-powershell)
-  - [Generating Synthetic Data](#generating-synthetic-data)
-  - [Training the Model](#training-the-model)
-  - [Detecting Abuse](#detecting-abuse)
-- [Implementation Examples](#implementation-examples)
-  - [Integration with SIEM Platforms](#integration-with-siem-platforms)
-  - [Automated Alerting](#automated-alerting)
+  - [Starting the CertifEye Console](#starting-the-certifeye-console)
+  - [Available Commands](#available-commands)
+- [Configuration File (`config.yaml`)](#configuration-file-configyaml)
+- [Exporting CA Logs Using PowerShell](#exporting-ca-logs-using-powershell)
+- [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
@@ -35,17 +32,20 @@ An AI-powered detection system for identifying potential abuse of Active Directo
 
 ```
 CertifEye/
-├── certifeye.py                 # Main script for detecting abuse
-├── prune_data.py                # Script to assist pruning a large dataset for training
-├── train_model.py               # Script for training the machine learning model
-├── generate_synthetic_data.py   # Script to generate synthetic CA log data
-├── certifeye_utils.py           # Utility functions used across scripts
-├── config.yaml                  # Configuration file in YAML format
-├── requirements.txt             # Python package dependencies
-├── scripts/                     # Directory for scripts
-│   └── Export-CALogs.ps1        # PowerShell script to export CA logs
-LICENSE.md                       # Project license (MIT License)
-README.md                        # This README file
+├── certifeye/                  
+│   ├── __init__.py
+│   ├── certifeye.py                 # Main console application
+│   ├── certifeye_utils.py           # Utility functions
+│   ├── detect_abuse.py              # Abuse detection module
+│   ├── generate_synthetic_data.py   # Synthetic data generator
+│   ├── prune_data.py                # Data pruning script
+│   └── train_model.py               # Model training script
+├── scripts/
+│   └── Export-CALogs.ps1            # PowerShell script to export CA logs
+├── config.yaml                      # Configuration file
+├── requirements.txt                 # Dependencies
+├── LICENSE.md                       # Project license (MIT License)
+└── README.md                        # This README file
 ```
 
 ---
@@ -91,281 +91,218 @@ README.md                        # This README file
    Install the required Python packages using `requirements.txt`:
 
    ```bash
-   pip install -r requirements.txt
+   pip install -r certifeye/requirements.txt
    ```
 
 ---
 
 ## Usage
 
-### Configuration File (`config.yaml`)
+### Starting the CertifEye Console
 
-Before running the scripts, ensure that `config.yaml` is properly configured with your environment-specific settings. The configuration file is included in the repository and contains settings such as:
+To start the CertifEye console application:
+
+```bash
+python certifeye/certifeye.py
+```
+
+You'll see the following prompt:
+
+```
+Welcome to CertifEye. Type help or ? to list commands.
+
+(CertifEye)
+```
+
+### Available Commands
+
+- `help` or `?`: List available commands.
+- `generate`: Generate synthetic CA log data.
+- `train`: Train the machine learning model.
+- `prune`: Prune the dataset.
+- `detect`: Detect potential abuse.
+- `exit`: Exit the CertifEye console.
+
+#### **Command Usage**
+
+- **Generate Synthetic Data**
+
+  ```bash
+  (CertifEye) generate
+  ```
+
+- **Train the Model**
+
+  ```bash
+  (CertifEye) train
+  ```
+
+- **Prune Data**
+
+  ```bash
+  (CertifEye) prune
+  ```
+
+- **Detect Abuse**
+
+  ```bash
+  (CertifEye) detect
+  ```
+---
+
+## Configuration File (`config.yaml`)
+
+Before running the scripts, ensure that `config.yaml` is properly configured with your environment-specific settings. The configuration file contains settings such as:
 
 - Paths to CA logs
-- **Optionally**, known abuse request IDs
+- Known abuse and good request IDs
 - High-value users/groups to monitor
 - Vulnerable templates
 - Templates requiring manager approval
 - Authorized users for client authentication certificates
-- **Training Mode**: Specify the training approach (`supervised`, `unsupervised`, or `hybrid`).
+- Training Mode: Specify the training approach (`supervised`, `unsupervised`, or `hybrid`).
 - SMTP settings for email alerts
+- Custom thresholds and definitions
 
-#### **Training Mode Configuration**
+**Example Configuration:**
 
-The `training_mode` parameter in `config.yaml` allows you to specify the training approach:
+```yaml
+paths:
+  ca_logs_full_path: "C:/CA/exported_ca_logs.csv"
+  ca_logs_pruned_path: "C:/CA/pruned_ca_logs.csv"
+  ca_logs_detection_path: "C:/CA/new_requests.csv"
+  model_output_path: "certifeye_model.joblib"
+  params_output_path: "certifeye_params.pkl"
 
-- **`training_mode: "supervised"`**: Use supervised learning; requires known abuse cases (`known_abuse_request_ids` must be provided).
-- **`training_mode: "unsupervised"`**: Use unsupervised anomaly detection; does not require known abuse cases.
-- **`training_mode: "hybrid"`**: Combine both supervised and unsupervised methods.
+known_abuse_request_ids:
+  - 25611
+  - 34321
+  - 64308
+  - 64309
+  - 64490
+  - 64491
+  - 69306
 
-If `known_abuse_request_ids` is empty or not provided, the script will default to unsupervised learning.
+known_good_request_ids:
+  - 28311
+  - 28323
+  - 28609
+
+privileged_keywords:
+  - "Administrator"
+  - "Admin"
+  - "Domain Admins"
+  - "Enterprise Admins"
+  - "Schema Admins"
+  - "krbtgt"
+  - "Root"
+  - "BackupAdmin"
+  - "SecurityAdmin"
+
+vulnerable_templates:
+  - "SubCA"
+  - "EnrollmentAgent"
+  - "EnrollmentAgentOffline"
+  - "DomainController"
+  - "DirectoryEmailReplication"
+  - "ESC1"
+  - "LegacySmartcardLogon"
+  - "ESC3"
+  - "ESC2"
+
+templates_requiring_approval: []
+
+authorized_client_auth_users: []
+
+training_mode: "hybrid"
+
+smtp:
+  server: 'smtp.yourdomain.com'
+  port: 587
+  username: 'alert@yourdomain.com'
+  password: 'your_password'  # Secure this appropriately
+  sender_email: 'alert@yourdomain.com'
+
+validity_threshold: 730  # Validity threshold in days
+request_volume_threshold: 50  # Request volume threshold
+classification_threshold: 0.625  # Classification threshold
+
+off_hours_start: 22  # Off-hours start hour
+off_hours_end: 6     # Off-hours end hour
+```
 
 **Security Note:** Ensure that the `config.yaml` is secured and not exposed publicly, as it may contain sensitive information.
 
-### Exporting CA Logs Using PowerShell
+---
+
+## Exporting CA Logs Using PowerShell
 
 To ensure CertifEye has all the necessary data for accurate detection, it's important to collect comprehensive Certificate Authority (CA) logs that include fields such as the issued subject and SANs.
 
-We have provided a PowerShell script `Export-CALogs.ps1` in the `scripts` directory to help you export these logs.
-
-#### Steps to Export CA Logs
+**Steps to Export CA Logs:**
 
 1. **Place the Script**
 
-   - Copy the `Export-CALogs.ps1` script from the `scripts` directory to a location on your CA server.
+   Copy `Export-CALogs.ps1` from the `scripts` directory to a location on your CA server.
 
-2. **Adjust Parameters (Optional)**
+2. **Run the Script**
 
-   - The script accepts an optional parameter `-OutputCsv` to specify the export location.
+   Open PowerShell **as an administrator** and execute:
 
-     ```powershell
-     # Example usage
-     .\Export-CALogs.ps1 -OutputCsv "C:\Logs\exported_ca_logs.csv"
-     ```
-
-3. **Run the Script**
-
-   - Open PowerShell **as an administrator**.
-   - Navigate to the directory containing the script.
-   - Execute the script:
-
-     ```powershell
-     .\Export-CALogs.ps1
-     ```
-
-4. **Verify the Exported Logs**
-
-   - The logs will be saved to the path specified in `-OutputCsv`.
-   - Open the CSV file to ensure it contains the expected data.
-
-5. **Update `config.yaml`**
-
-   - Ensure the `ca_logs_path` in your `config.yaml` file points to the exported logs:
-
-     ```yaml
-     paths:
-       ca_logs_path: "C:/Logs/exported_ca_logs.csv"
-     ```
-
-#### Notes
-
-- **Prerequisites**
-
-  - The script uses `certutil`, which is included with Windows and does not require additional modules.
-
-- **Execution Policy**
-
-  - You may need to set the PowerShell execution policy to allow script execution:
-
-    ```powershell
-    Set-ExecutionPolicy RemoteSigned -Scope Process
-    ```
-
-- **Permissions**
-
-  - Run the script with an account that has sufficient permissions to access the CA data.
-
-- **Customization**
-
-  - Adjust the properties and fields in the script if you need additional data.
-  - Ensure that the column names in the exported CSV match those expected by CertifEye.
-
-#### Security Considerations
-
-- **Sensitive Data**: The exported logs may contain sensitive information. Handle the exported CSV file securely and restrict access as appropriate.
-
-- **Compliance**: Ensure that exporting and analyzing CA logs complies with your organization's policies and any relevant regulations.
-
-### Generating Synthetic Data
-
-For testing and demonstration purposes, CertifEye includes a script to generate synthetic CA log data: `generate_synthetic_data.py`.
-
-This script creates synthetic datasets that mimic real CA logs, including known abuse cases, without containing any sensitive information.
-
-#### **Usage**
-
-1. **Run the Script**
-
-   ```bash
-   python generate_synthetic_data.py
+   ```powershell
+   .\Export-CALogs.ps1 -OutputCsv "C:\CA\exported_ca_logs.csv"
    ```
 
-2. **Command-Line Arguments**
+3. **Verify the Exported Logs**
 
-   The script accepts optional command-line arguments to configure the number of records and abuses:
-
-   ```bash
-   python generate_synthetic_data.py -tr 1000 -ta 6 -dr 5000 -da 20
-   ```
-
-   - `-tr`, `--train_records`: Number of training records to generate (default: 1000).
-   - `-ta`, `--train_abuses`: Number of known abuses for training (default: 6).
-   - `-dr`, `--detect_records`: Number of detection records to generate (default: 5000).
-   - `-da`, `--detect_abuses`: Number of abuses in detection data (default: 20).
-   - `-v`, `--verbose`: Enable verbose output.
-
-3. **Script Output**
-
-   The script will generate two CSV files:
-
-   - `synthetic_ca_logs_training.csv`: Synthetic training data with known abuses.
-   - `synthetic_ca_logs_detection.csv`: Synthetic detection data with abuses randomly distributed.
-
-   It will also output the known abuse Request IDs to the console and log:
-
-   ```
-   Known abuse Request IDs for training data: [10571, 10901, 11479, 12401, 12570, 12781]
-   Abuse Request IDs in detection data: [20714, 20763, 21016, ..., 24911]
-   ```
+   Ensure the logs are saved to the specified path and contain the expected data.
 
 4. **Update `config.yaml`**
 
-   - Use the known abuse Request IDs from the training data to populate `known_abuse_request_ids` in your `config.yaml`:
+   Set the `ca_logs_full_path` in your `config.yaml`:
 
-     ```yaml
-     known_abuse_request_ids:
-       - 10571
-       - 10901
-       - 11479
-       - 12401
-       - 12570
-       - 12781
-     ```
-
-#### **Customization**
-
-- **Domain Name**
-
-  - Adjust the `DOMAIN_NAME` variable in the script to change the domain used in the synthetic data.
-
-- **Naming Conventions**
-
-  - Modify the username and machine name generation functions to match specific naming conventions.
-
-- **SAN Variability**
-
-  - Expand or adjust the types of Subject Alternative Names (SANs) generated to suit your testing needs.
-
-- **Certificate Templates and EKUs**
-
-  - Update the lists of certificate templates and Enhanced Key Usages (EKUs) to reflect your environment.
-
-#### **Integration with CertifEye**
-
-- **Training the Model**
-
-  - Use `synthetic_ca_logs_training.csv` as the training dataset.
-  - Ensure `known_abuse_request_ids` in `config.yaml` are set correctly.
-
-- **Detecting Abuse**
-
-  - Use `synthetic_ca_logs_detection.csv` as the detection dataset.
-  - Run `certifeye.py` to process the detection data.
-
-### Training the Model
-
-With comprehensive CA logs (or synthetic data) and `config.yaml` configured, you can now train the machine learning model.
-
-1. **Set the Training Mode**
-
-   - In `config.yaml`, set the `training_mode` parameter to `"supervised"`, `"unsupervised"`, or `"hybrid"` depending on your data availability and preference.
-   - If you have known abuse cases, list their Request IDs in `known_abuse_request_ids`.
-
-2. **Run the Training Script**
-
-   ```bash
-   python train_model.py
+   ```yaml
+   paths:
+     ca_logs_full_path: "C:/CA/exported_ca_logs.csv"
    ```
-
-   - The script will output evaluation metrics to `train_model.log` and save the trained model (`certifeye_model.joblib`) and parameters (`certifeye_params.pkl`).
-   - If using supervised learning, ensure that `known_abuse_request_ids` is populated with the Request IDs of known abuse cases.
-
-### Detecting Abuse
-
-1. **Ensure `config.yaml` is Updated**
-
-   - The detection script uses the same `config.yaml` file.
-
-2. **Run the Detection Script**
-
-   ```bash
-   python certifeye.py
-   ```
-
-   - The script will read from `config.yaml` and use the trained model to detect potential abuses.
-   - Alerts will be logged in `certifeye.log` and can be configured to send email notifications.
-
-3. **Configure Alerts**
-
-   - Update SMTP settings in `config.yaml`.
-   - Uncomment the `send_alert` line in `certifeye.py` to enable email notifications when potential abuse is detected.
 
 ---
 
-## Implementation Examples
+## Examples
 
-### Integration with SIEM Platforms
+### **Using the CertifEye Console**
 
-CertifEye can be integrated into SIEM platforms like Splunk, IBM QRadar, or ArcSight for centralized monitoring.
+**Step 1: Generate Synthetic Data**
 
-**Splunk Integration Example:**
+```bash
+(CertifEye) generate
+```
 
-1. **Enable HTTP Event Collector (HEC) in Splunk**
+Follow the prompts or configure the parameters in `config.yaml`.
 
-2. **Configure CertifEye to Send Alerts to Splunk**
+**Step 2: Prune Data (Optional)**
 
-   ```python
-   # In certifeye.py
-   import requests
+```bash
+(CertifEye) prune
+```
 
-   def send_to_siem(alert_data):
-       splunk_hec_url = 'https://your-splunk-server:8088/services/collector/event'
-       splunk_token = 'YOUR_SPLUNK_HEC_TOKEN'
-       headers = {'Authorization': f'Splunk {splunk_token}'}
-       payload = {'event': alert_data, 'sourcetype': 'certifeye:alert'}
+This step can help in reducing dataset size for faster training.
 
-       response = requests.post(splunk_hec_url, headers=headers, json=payload, verify=False)
-       if response.status_code == 200:
-           logging.info('Event sent to Splunk successfully.')
-       else:
-           logging.error(f'Failed to send event to Splunk: {response.text}')
-   ```
+**Step 3: Train the Model**
 
-### Automated Alerting
+```bash
+(CertifEye) train
+```
 
-**Email Alert Example:**
+The model will be trained based on your configuration and saved to the specified path.
 
-1. **Configure SMTP Settings in `config.yaml`**
+**Step 4: Detect Abuse**
 
-   Ensure your SMTP settings are correctly specified in `config.yaml`.
+```bash
+(CertifEye) detect
+```
 
-2. **Enable Alerting in `certifeye.py`**
-
-   ```python
-   if prediction == 1:
-       send_alert('security_team@yourdomain.com', new_request, probability, smtp_config)
-   ```
+The system will analyze requests and report any potential abuses.
 
 ---
 
@@ -407,13 +344,6 @@ This project is licensed under the terms of the [MIT License](LICENSE.md).
 
 ---
 
-**Security Considerations**
-
-- **Sensitive Information**: Ensure that any sensitive data, such as credentials, are secured and not committed to version control.
-- **Compliance**: Always comply with your organization's policies and legal regulations when handling certificate data and logs.
-
----
-
 ## Acknowledgments
 
 We appreciate the contributions from the open-source community and the support of our dedicated team members who made this project possible.
@@ -425,3 +355,25 @@ We appreciate the contributions from the open-source community and the support o
 ---
 
 For any issues or questions, please open an issue on the GitHub repository or reach out to the project maintainers.
+
+---
+
+### **Security Considerations**
+
+- **Sensitive Information**: Ensure that any sensitive data, such as credentials, are secured and not committed to version control.
+- **Compliance**: Always comply with your organization's policies and legal regulations when handling certificate data and logs.
+
+---
+
+**Disclaimer:** This tool is intended for authorized use only. Unauthorized or malicious use is strictly prohibited.
+
+---
+
+### **Contact**
+
+For further assistance, please contact:
+
+- **Email**: glid3s@protonmail.com
+- **GitHub**: [glides](https://github.com/glides)
+
+---

@@ -1,11 +1,10 @@
-# prune_data.py
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
 CertifEye - Data Pruning Script
 Author: glides
-Version: 0.9
+Version: 0.9.1
 
 This script prunes a large CA logs dataset to create a manageable subset for model training.
 """
@@ -16,10 +15,7 @@ import argparse
 import yaml
 import pandas as pd
 from colorama import init, Fore, Style
-from certifeye_utils import print_banner
-
-# Initialize colorama
-init(autoreset=True)
+#from certifeye_utils import print_banner
 
 # === Configure Logging ===
 
@@ -27,39 +23,50 @@ init(autoreset=True)
 logger = logging.getLogger('CertifEye-PruneData')
 logger.setLevel(logging.DEBUG)
 
-# Create handlers
-file_handler = logging.FileHandler('prune_data.log')
-file_handler.setLevel(logging.INFO)
+if not logger.handlers:
+    # Create handlers
+    file_handler = logging.FileHandler('prune_data.log')
+    file_handler.setLevel(logging.INFO)
 
-console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setLevel(logging.INFO)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
 
-# Create formatters and add them to handlers
-file_formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')
-console_formatter = logging.Formatter('%(message)s')
+    # Create formatters and add them to handlers
+    file_formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')
+    console_formatter = logging.Formatter('%(message)s')
 
-file_handler.setFormatter(file_formatter)
-console_handler.setFormatter(console_formatter)
+    file_handler.setFormatter(file_formatter)
+    console_handler.setFormatter(console_formatter)
 
-# Add handlers to the logger
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
+    # Add handlers to the logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
 
-# === Parse Command-Line Arguments ===
 
-parser = argparse.ArgumentParser(description='CertifEye - Data Pruning Script')
-parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
-parser.add_argument('-s', '--sample-size', type=int, default=3000, help='Sample size of normal requests')
-args = parser.parse_args()
+def get_parser():
+        parser = argparse.ArgumentParser(description='CertifEye - Data Pruning Script')
+        parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+        parser.add_argument('-s', '--sample-size', type=int, default=3000, help='Sample size of normal requests')
+        return parser
 
-if args.verbose:
-    console_handler.setLevel(logging.DEBUG)
+def main(args=None):
+    # === Parse Command-Line Arguments ===
+    
+    parser = get_parser()
+    if args is None:
+        args = sys.argv[1:]
+    args = parser.parse_args(args)
 
-# === Main Execution ===
+    if args.verbose:
+        console_handler.setLevel(logging.DEBUG)
 
-if __name__ == '__main__':
+    # Initialize colorama
+    init(autoreset=True)
+
+    # === Main Execution ===
+
     try:
-        print_banner()
+        # print_banner()
 
         # === Load Configuration ===
 
@@ -129,6 +136,11 @@ if __name__ == '__main__':
         print(f"{Fore.RED}\nOperation cancelled by user. Exiting gracefully.{Style.RESET_ALL}")
         sys.exit(0)
     except FileNotFoundError as fnf_error:
-        logger.error(f"{Fore.RED}File not found: {fnf_error}{Style.RESET_ALL}", exc_info=True)
+        logger.error(f"File not found: {fnf_error}", exc_info=True)
+        sys.exit(1)
     except Exception as e:
-        logger.error(f"{Fore.RED}An unexpected error occurred: {e}{Style.RESET_ALL}", exc_info=True)
+        logger.error(f"An unexpected error occurred: {e}", exc_info=True)
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()

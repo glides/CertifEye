@@ -7,3 +7,4 @@ joblib
 tqdm
 shap
 faker
+prompt-toolkit

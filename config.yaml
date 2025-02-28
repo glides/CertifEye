@@ -1,0 +1,78 @@
+paths:
+  # Full CA logs for pruning (used by prune_data.py)
+  ca_logs_full_path: "C:/CA/exported_ca_logs.csv"
+
+  # Pruned CA logs for training (used by train_model.py)
+  # ca_logs_pruned_path: "C:/CA/pruned_ca_logs.csv"
+  ca_logs_pruned_path: "C:/CA/synthetic_ca_logs_training.csv"
+
+  # CA logs for detection (used by detect_abuse.py)
+  # Can point to the full CA logs or to a file containing new requests
+  # ca_logs_detection_path: "C:/CA/new_requests.csv"
+  ca_logs_detection_path: "C:/CA/synthetic_ca_logs_detection.csv"
+
+  model_output_path: "certifeye_model.joblib"
+  params_output_path: "certifeye_params.pkl"
+
+#known_abuse_request_ids: []  # Leave empty if no known abuse cases are available
+known_abuse_request_ids: #[10041, 10051, 10226, 10613, 10791, 11214]
+  - 25611
+  - 34321
+  - 64308
+  - 64490
+  - 64491
+  - 69306
+
+known_good_request_ids: []
+  # Add Request IDs of known good requests (false positives)
+  # - 28311
+  # - 28323
+  # - 28609
+  # You can add more IDs here as you identify false positives
+
+privileged_keywords: [
+  "Admin",
+  "Administrator",
+  "Root",
+  "System",
+  "Service",
+  "Backup",
+  "Security",
+  "DomainAdmin",
+  "EnterpriseAdmin"
+  ]
+
+
+
+vulnerable_templates: [ 
+  "AdminCertificate",
+  "DomainControllerCertificate",
+  "CodeSigningCertificate"
+  ]
+
+templates_requiring_approval: [] # Add templates if applicable
+  
+
+authorized_client_auth_users: [] # Add authorized users if applicable
+  
+
+training_mode: "hybrid"  # Options: "supervised", "unsupervised", "hybrid"
+#training_mode: "unsupervised"  # Options: "supervised", "unsupervised", "hybrid"
+
+smtp:
+  server: 'smtp.yourdomain.com'
+  port: 587
+  username: 'alert@yourdomain.com'
+  password: '${SMTP_PASSWORD}'  # Use environment variable
+  sender_email: 'alert@yourdomain.com'
+
+# Custom thresholds (optional)
+validity_threshold: 730  # Set validity threshold to 730 days (2 years)
+request_volume_threshold: 50  # Set request volume threshold
+#classification_threshold: 0.625  # Set custom classification threshold
+#classification_threshold: 0.675  # Set custom classification threshold
+classification_threshold: 0.73  # Set custom classification threshold
+
+# Off-hours definition (optional)
+off_hours_start: 18  # Off-hours start at 6 PM
+off_hours_end: 7     # Off-hours end at 7 AM

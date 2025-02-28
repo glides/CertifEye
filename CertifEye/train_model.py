@@ -5,7 +5,7 @@
 """
 CertifEye - Model Training Script
 Author: glides
-Version: 0.9
+Version: 0.9.1
 
 This script trains a machine learning model to detect potential abuses of Active Directory Certificate Services.
 """
@@ -33,10 +33,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE, RandomOverSampler
 from colorama import init, Fore, Style
-from certifeye_utils import flag_privileged_entries, print_banner
-
-# Initialize colorama
-init(autoreset=True)
+from certifeye_utils import flag_privileged_entries
 
 # === Configure Logging ===
 
@@ -44,38 +41,52 @@ init(autoreset=True)
 logger = logging.getLogger('CertifEye-TrainModel')
 logger.setLevel(logging.DEBUG)
 
-# Create handlers
-file_handler = logging.FileHandler('train_model.log')
-file_handler.setLevel(logging.INFO)
+if not logger.handlers:
+    # Create handlers
+    file_handler = logging.FileHandler('train_model.log')
+    file_handler.setLevel(logging.INFO)
 
-console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setLevel(logging.INFO)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
 
-# Create formatters and add them to handlers
-file_formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')
-console_formatter = logging.Formatter('%(message)s')
+    # Create formatters and add them to handlers
+    file_formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')
+    console_formatter = logging.Formatter('%(message)s')
 
-file_handler.setFormatter(file_formatter)
-console_handler.setFormatter(console_formatter)
+    file_handler.setFormatter(file_formatter)
+    console_handler.setFormatter(console_formatter)
 
-# Add handlers to the logger
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
+    # Add handlers to the logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
 
-# === Parse Command-Line Arguments ===
 
-parser = argparse.ArgumentParser(description='CertifEye - Model Training Script')
-parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
-args = parser.parse_args()
+def get_parser():
+    parser = argparse.ArgumentParser(description='CertifEye - Model Training Script')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+    return parser
 
-if args.verbose:
-    console_handler.setLevel(logging.DEBUG)
+def main(args=None):
+    """
+    Main function to execute the model training process.
+    """    
+    
+    # === Parse Command-Line Arguments ===
+    parser = get_parser()
+    if args is None:
+        args = sys.argv[1:]
+    args = parser.parse_args(args)
 
-# === Main Execution ===
+    if args.verbose:
+        console_handler.setLevel(logging.DEBUG)
 
-if __name__ == '__main__':
+    # Initialize colorama
+    init(autoreset=True)
+
+    # === Main Execution ===
+
     try:
-        print_banner()
+        # print_banner()
 
         # === Load Configuration ===
 
@@ -101,7 +112,9 @@ if __name__ == '__main__':
         # Remove any overlaps between known abuse and known good IDs
         overlap_ids = known_abuse_request_ids_set.intersection(known_good_request_ids_set)
         if overlap_ids:
-            logger.warning(f"{Fore.YELLOW}Request IDs {overlap_ids} are present in both known abuse and known good lists.{Style.RESET_ALL}")
+            logger.warning(
+                f"{Fore.YELLOW}Request IDs {overlap_ids} are present in both known abuse and known good lists.{Style.RESET_ALL}"
+            )
             known_good_request_ids_set -= overlap_ids  # Prioritize abuse IDs
 
         # Privileged Keywords
@@ -148,8 +161,12 @@ if __name__ == '__main__':
             'CertificateValidityStart': '',
             'CertificateValidityEnd': '',
             'EnhancedKeyUsage': '',
-            'CertificateSANs': ''
+            'CertificateSANs': '',
+            'RequestDisposition': ''
         }, inplace=True)
+
+        # Handle multi-line 'CertificateSANs'
+        df['CertificateSANs'] = df['CertificateSANs'].astype(str).str.replace('\n', ' ').str.replace('\r', ' ')
 
         # Convert date columns to datetime
         date_columns = ['CertificateValidityStart', 'CertificateValidityEnd', 'RequestSubmissionTime']
@@ -164,7 +181,9 @@ if __name__ == '__main__':
         initial_record_count = len(df)
         df.dropna(subset=date_columns, inplace=True)
         after_drop_count = len(df)
-        logger.debug(f"Dropped {initial_record_count - after_drop_count} records due to invalid dates.")
+        dropped_records = initial_record_count - after_drop_count
+        if dropped_records > 0:
+            logger.debug(f"Dropped {dropped_records} records due to invalid dates.")
 
         if df.empty:
             logger.error(f"{Fore.RED}All records were dropped due to invalid dates.{Style.RESET_ALL}")
@@ -214,7 +233,10 @@ if __name__ == '__main__':
 
         # === Requester Behavior Analysis ===
 
-        df['Requests_Per_Hour'] = df.groupby(['RequesterName', 'RequestWindow'])['RequestID'].transform('count')
+        df['RequestWindowStr'] = df['RequestWindow'].astype(str)
+        df['RequesterWindow'] = df['RequesterName'] + '_' + df['RequestWindowStr']
+
+        df['Requests_Per_Hour'] = df.groupby('RequesterWindow')['RequestID'].transform('count')
 
         if request_volume_threshold is None:
             request_volume_threshold = df['Requests_Per_Hour'].mean() + 3 * df['Requests_Per_Hour'].std()
@@ -249,8 +271,9 @@ if __name__ == '__main__':
         # Ensure all expected columns are present
         missing_cols = [col for col in feature_cols if col not in df.columns]
         if missing_cols:
-            missing_df = pd.DataFrame(0, index=df.index, columns=missing_cols)
-            df = pd.concat([df, missing_df], axis=1)
+            for col in missing_cols:
+                df[col] = 0  # Add missing columns with default value of 0
+            logger.debug(f"Added missing feature columns: {missing_cols}")
 
         X = df[feature_cols].copy()
 
@@ -274,28 +297,27 @@ if __name__ == '__main__':
 
             y = df['Abuse_Flag']
 
-            # Check class distribution
-            class_counts = y.value_counts()
-            logger.debug("Class distribution before oversampling:")
-            logger.debug(f"\n{class_counts}")
+            logger.debug(f"Class distribution before oversampling:\n{y.value_counts()}")
 
             # Handle imbalanced classes
-            if class_counts.min() < 6:
-                logger.warning(f"{Fore.YELLOW}Minority class has too few samples for SMOTE. Using RandomOverSampler instead.{Style.RESET_ALL}")
+            if y.value_counts().min() < 6:
+                logger.warning(
+                    f"{Fore.YELLOW}Minority class has too few samples for SMOTE. Using RandomOverSampler instead.{Style.RESET_ALL}"
+                )
                 ros = RandomOverSampler(random_state=42)
                 X_resampled, y_resampled = ros.fit_resample(X, y)
-                synthetic_samples = len(X_resampled) - len(X)
-                logger.info(f"Oversampling added {synthetic_samples} samples to balance classes.")
+                sampling_strategy = 'RandomOverSampler'
             else:
                 smote = SMOTE(random_state=42)
                 X_resampled, y_resampled = smote.fit_resample(X, y)
-                synthetic_samples = len(X_resampled) - len(X)
-                logger.info(f"{Fore.CYAN}SMOTE generated {synthetic_samples} synthetic samples.{Style.RESET_ALL}")
+                sampling_strategy = 'SMOTE'
 
-            # Check class distribution after oversampling
-            resampled_class_counts = pd.Series(y_resampled).value_counts()
-            logger.debug("Class distribution after oversampling:")
-            logger.debug(f"\n{resampled_class_counts}")
+            synthetic_samples = len(X_resampled) - len(X)
+            logger.info(
+                f"{Fore.CYAN}{sampling_strategy} added {synthetic_samples} samples to balance classes.{Style.RESET_ALL}"
+            )
+
+            logger.debug(f"Class distribution after oversampling:\n{pd.Series(y_resampled).value_counts()}")
 
             # === Split Data ===
 
@@ -344,12 +366,12 @@ if __name__ == '__main__':
             report = classification_report(y_test, y_pred)
             logger.debug(f"\n{report}")
 
-            logger.debug("Confusion Matrix:")
             cm = confusion_matrix(y_test, y_pred)
+            logger.debug("Confusion Matrix:")
             logger.debug(f"\n{cm}")
 
             roc_auc = roc_auc_score(y_test, y_pred_proba)
-            logger.info(f"{Fore.WHITE}ROC AUC Score:{Fore.LIGHTBLACK_EX}{roc_auc:.2f}{Style.RESET_ALL}")
+            logger.info(f"{Fore.WHITE}ROC AUC Score: {Fore.LIGHTBLACK_EX}{roc_auc:.2f}{Style.RESET_ALL}")
 
             # Precision-Recall Curve AUC
             precision, recall, _ = precision_recall_curve(y_test, y_pred_proba)
@@ -358,8 +380,12 @@ if __name__ == '__main__':
 
             # Cross-Validation Scores
             cv_scores = cross_val_score(pipeline, X_resampled, y_resampled, cv=5, scoring='roc_auc')
-            logger.info(f"{Fore.WHITE}Cross-validated ROC AUC scores: {Fore.LIGHTBLACK_EX}{cv_scores}{Style.RESET_ALL}")
-            logger.info(f"{Fore.WHITE}Mean ROC AUC: {Fore.LIGHTBLACK_EX}{np.mean(cv_scores):.2f}{Style.RESET_ALL}")
+            logger.info(
+                f"{Fore.WHITE}Cross-validated ROC AUC scores: {Fore.LIGHTBLACK_EX}{cv_scores}{Style.RESET_ALL}"
+            )
+            logger.info(
+                f"{Fore.WHITE}Mean ROC AUC: {Fore.LIGHTBLACK_EX}{np.mean(cv_scores):.2f}{Style.RESET_ALL}"
+            )
 
             # === Feature Importance Analysis ===
 
@@ -409,7 +435,13 @@ if __name__ == '__main__':
         sys.exit(0)
     except FileNotFoundError as fnf_error:
         logger.error(f"{Fore.RED}File not found: {fnf_error}{Style.RESET_ALL}", exc_info=True)
+        sys.exit(1)
     except ValueError as val_error:
         logger.error(f"{Fore.RED}Value error: {val_error}{Style.RESET_ALL}", exc_info=True)
+        sys.exit(1)
     except Exception as e:
         logger.error(f"{Fore.RED}An unexpected error occurred: {e}{Style.RESET_ALL}", exc_info=True)
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()

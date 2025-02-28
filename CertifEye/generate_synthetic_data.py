@@ -1,57 +1,201 @@
-# generate_synthetic_data.py
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
 Synthetic CA Log Data Generator
 Author: glides
-Version: 0.9
+Version: 0.9.1
 
 This script generates synthetic CA log data similar in structure to the original data,
 without including any sensitive information. It generates training and detection datasets
 with configurable numbers of known abuses.
 """
 
+import random
 import pandas as pd
 import numpy as np
-import random
 import argparse
 import logging
 import sys
-from faker import Faker
+import yaml
 from datetime import datetime, timedelta
+from faker import Faker
 from colorama import init, Fore, Style
-from certifeye_utils import print_banner
+
+# === Configuration ===
+
+DOMAIN_NAME = "contoso.com"  # Use a consistent domain name
+
+# Certificate Templates (Add more if needed)
+certificate_templates = [
+    "UserCertificate",
+    "MachineCertificate",
+    "AdminCertificate",
+    "ServerCertificate",
+    "EncryptionCertificate",
+    "VPNCertificate",
+    "EmailCertificate",
+    "SMIMECertificate",
+    "CodeSigningCertificate",
+    "DomainControllerCertificate"
+]
+
+# Vulnerable Templates (Abuse Cases)
+vulnerable_templates = [
+    "AdminCertificate",
+    "DomainControllerCertificate",
+    "CodeSigningCertificate"
+]
+
+# Enhanced Key Usages (Add more if needed)
+enhanced_key_usages = [
+    "Client Authentication",
+    "Server Authentication",
+    "Code Signing",
+    "Secure Email",
+    "Time Stamping",
+    "OCSP Signing",
+    "Document Signing",
+    "Any Purpose"
+]
+
+# Request Dispositions
+request_dispositions = ["Issued", "Pending", "Denied", "Revoked"]
+
+# Privileged Keywords
+privileged_keywords = [
+    "Admin",
+    "Administrator",
+    "Root",
+    "System",
+    "Service",
+    "Backup",
+    "Security",
+    "DomainAdmin",
+    "EnterpriseAdmin"
+]
+
+# Departments for machine names
+departments = ["Sales", "Marketing", "Engineering", "HR", "Finance", "IT", "Legal", "Operations"]
 
 # Initialize Faker
 fake = Faker()
 
-# Initialize colorama
-init(autoreset=True)
+def get_parser():
+    parser = argparse.ArgumentParser(description='CertifEye - Synthetic Data Generator')
+    parser.add_argument('-tr', '--train_records', type=int, default=1000, help='Number of training records to generate')
+    parser.add_argument('-ta', '--train_abuses', type=int, default=6, help='Number of known abuses for training')
+    parser.add_argument('-dr', '--detect_records', type=int, default=5000, help='Number of detection records to generate')
+    parser.add_argument('-da', '--detect_abuses', type=int, default=20, help='Number of abuses in detection data')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+    # args = parser.parse_args()
+    return parser
 
-# === Configure Logging ===
+def main(args=None):
+    parser = get_parser()
+    if args is None:
+        args = sys.argv[1:]
+    args = parser.parse_args(args)
 
-# Create logger
-logger = logging.getLogger('CertifEye-SyntheticDataGenerator')
-logger.setLevel(logging.DEBUG)
+    # Initialize colorama
+    init(autoreset=True)
 
-# Create handlers
-file_handler = logging.FileHandler('generate_synthetic_data.log')
-file_handler.setLevel(logging.INFO)
+    # === Configure Logging ===
 
-console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setLevel(logging.INFO)
+    # Create logger
+    logger = logging.getLogger('CertifEye-SyntheticDataGenerator')
+    logger.setLevel(logging.DEBUG)
 
-# Create formatters and add them to handlers
-file_formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')
-console_formatter = logging.Formatter('%(message)s')
+    if not logger.handlers:
+        # Create handlers
+        file_handler = logging.FileHandler('generate_synthetic_data.log')
+        file_handler.setLevel(logging.INFO)
 
-file_handler.setFormatter(file_formatter)
-console_handler.setFormatter(console_formatter)
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.INFO)
 
-# Add handlers to the logger
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
+        # Create formatters and add them to handlers
+        file_formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')
+        console_formatter = logging.Formatter('%(message)s')
+
+        file_handler.setFormatter(file_formatter)
+        console_handler.setFormatter(console_formatter)
+
+        # Add handlers to the logger
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
+
+# === Parse Command-Line Arguments ===
+
+    parser = argparse.ArgumentParser(description='CertifEye - Synthetic Data Generator')
+    parser.add_argument('-tr', '--train_records', type=int, default=1000, help='Number of training records to generate')
+    parser.add_argument('-ta', '--train_abuses', type=int, default=6, help='Number of known abuses for training')
+    parser.add_argument('-dr', '--detect_records', type=int, default=5000, help='Number of detection records to generate')
+    parser.add_argument('-da', '--detect_abuses', type=int, default=20, help='Number of abuses in detection data')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+    args = parser.parse_args()
+
+    if args.verbose:
+        console_handler.setLevel(logging.DEBUG)
+
+    try:
+        # print_banner()
+
+        # === Generate Training Data ===
+
+        logger.info(f"{Fore.WHITE}Generating training data with {args.train_records} records and {args.train_abuses} known abuses...{Style.RESET_ALL}")
+        # Place known abuses at the end of training data
+        training_data, training_abuse_ids = generate_synthetic_ca_logs(
+            num_records=args.train_records + args.train_abuses,
+            num_abuses=args.train_abuses,
+            abuses_randomized=False,
+            start_request_id=10000
+        )
+
+        # === Generate Detection Data ===
+
+        logger.info(f"{Fore.WHITE}Generating detection data with {args.detect_records} records and {args.detect_abuses} abuses...{Style.RESET_ALL}")
+        # Randomize abuses in detection data
+        detection_data, detection_abuse_ids = generate_synthetic_ca_logs(
+            num_records=args.detect_records,
+            num_abuses=args.detect_abuses,
+            abuses_randomized=True,
+            start_request_id=20000  # Ensure RequestIDs do not overlap with training data
+        )
+
+        # === Output Summary ===
+
+        # Output known abuse Request IDs for training data
+        training_abuse_ids_sorted = sorted(training_abuse_ids)
+        logger.info(f"{Fore.WHITE}\nKnown abuse Request IDs for training data: {Fore.CYAN}{training_abuse_ids_sorted}{Style.RESET_ALL}")
+
+
+        # Output known abuse Request IDs for detection data
+        detection_abuse_ids_sorted = sorted(detection_abuse_ids)
+        logger.info(f"{Fore.WHITE}Abuse Request IDs in detection data: {Fore.YELLOW}{detection_abuse_ids_sorted}{Style.RESET_ALL}{Style.RESET_ALL}")
+
+
+        # Output privileged keywords used
+        logger.info(f"{Fore.WHITE}Privileged keywords used: {Fore.LIGHTBLACK_EX}{privileged_keywords}{Style.RESET_ALL}")
+
+
+        # Output vulnerable templates used
+        logger.info(f"{Fore.WHITE}Vulnerable templates used: {Fore.LIGHTBLACK_EX}{vulnerable_templates}{Style.RESET_ALL}")
+
+
+        # === Save Data ===
+        
+        training_data.to_csv("synthetic_ca_logs_training.csv", index=False)
+        logger.info(f"{Fore.GREEN}\nTraining data saved to {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_training.csv'{Style.RESET_ALL}")
+
+        detection_data.to_csv("synthetic_ca_logs_detection.csv", index=False)
+        logger.info(f"{Fore.GREEN}Detection data saved to: {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_detection.csv'{Style.RESET_ALL}")
+
+    except KeyboardInterrupt:
+        print(f"{Fore.RED}\nOperation cancelled by user. Exiting gracefully.{Style.RESET_ALL}")
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}", exc_info=True)
 
 # === User and Machine Naming Conventions ===
 
@@ -290,130 +434,4 @@ def generate_abuse_cases(num_abuses, used_request_ids, id_range_start, id_range_
 # === Main Execution ===
 
 if __name__ == '__main__':
-    try:
-        print_banner()
-
-        # === Parse Command-Line Arguments ===
-
-        parser = argparse.ArgumentParser(description='CertifEye - Synthetic Data Generator')
-        parser.add_argument('-tr', '--train_records', type=int, default=1000, help='Number of training records to generate')
-        parser.add_argument('-ta', '--train_abuses', type=int, default=6, help='Number of known abuses for training')
-        parser.add_argument('-dr', '--detect_records', type=int, default=5000, help='Number of detection records to generate')
-        parser.add_argument('-da', '--detect_abuses', type=int, default=20, help='Number of abuses in detection data')
-        parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
-        args = parser.parse_args()
-
-        if args.verbose:
-            console_handler.setLevel(logging.DEBUG)
-
-        # === Configuration ===
-
-        DOMAIN_NAME = "contoso.com"  # Use a consistent domain name
-
-        # Certificate Templates (Add more if needed)
-        certificate_templates = [
-            "UserCertificate",
-            "MachineCertificate",
-            "AdminCertificate",
-            "ServerCertificate",
-            "EncryptionCertificate",
-            "VPNCertificate",
-            "EmailCertificate",
-            "SMIMECertificate",
-            "CodeSigningCertificate",
-            "DomainControllerCertificate"
-        ]
-
-        # Vulnerable Templates (Abuse Cases)
-        vulnerable_templates = [
-            "AdminCertificate",
-            "DomainControllerCertificate",
-            "CodeSigningCertificate"
-        ]
-
-        # Enhanced Key Usages (Add more if needed)
-        enhanced_key_usages = [
-            "Client Authentication",
-            "Server Authentication",
-            "Code Signing",
-            "Secure Email",
-            "Time Stamping",
-            "OCSP Signing",
-            "Document Signing",
-            "Any Purpose"
-        ]
-
-        # Request Dispositions
-        request_dispositions = ["Issued", "Pending", "Denied", "Revoked"]
-
-        # Privileged Keywords
-        privileged_keywords = [
-            "Admin",
-            "Administrator",
-            "Root",
-            "System",
-            "Service",
-            "Backup",
-            "Security",
-            "DomainAdmin",
-            "EnterpriseAdmin"
-        ]
-
-        # Departments for machine names
-        departments = ["Sales", "Marketing", "Engineering", "HR", "Finance", "IT", "Legal", "Operations"]
-
-        # === Generate Training Data ===
-
-        logger.info(f"{Fore.WHITE}Generating training data with {args.train_records} records and {args.train_abuses} known abuses...{Style.RESET_ALL}")
-        # Place known abuses at the end of training data
-        training_data, training_abuse_ids = generate_synthetic_ca_logs(
-            num_records=args.train_records + args.train_abuses,
-            num_abuses=args.train_abuses,
-            abuses_randomized=False,
-            start_request_id=10000
-        )
-
-        # === Generate Detection Data ===
-
-        logger.info(f"{Fore.WHITE}Generating detection data with {args.detect_records} records and {args.detect_abuses} abuses...{Style.RESET_ALL}")
-        # Randomize abuses in detection data
-        detection_data, detection_abuse_ids = generate_synthetic_ca_logs(
-            num_records=args.detect_records,
-            num_abuses=args.detect_abuses,
-            abuses_randomized=True,
-            start_request_id=20000  # Ensure RequestIDs do not overlap with training data
-        )
-
-        # === Output Summary ===
-
-        # Output known abuse Request IDs for training data
-        training_abuse_ids_sorted = sorted(training_abuse_ids)
-        logger.info(f"{Fore.WHITE}\nKnown abuse Request IDs for training data: {Fore.CYAN}{training_abuse_ids_sorted}{Style.RESET_ALL}")
-
-
-        # Output known abuse Request IDs for detection data
-        detection_abuse_ids_sorted = sorted(detection_abuse_ids)
-        logger.info(f"{Fore.WHITE}Abuse Request IDs in detection data: {Fore.YELLOW}{detection_abuse_ids_sorted}{Style.RESET_ALL}{Style.RESET_ALL}")
-
-
-        # Output privileged keywords used
-        logger.info(f"{Fore.WHITE}Privileged keywords used: {Fore.LIGHTBLACK_EX}{privileged_keywords}{Style.RESET_ALL}")
-
-
-        # Output vulnerable templates used
-        logger.info(f"{Fore.WHITE}Vulnerable templates used: {Fore.LIGHTBLACK_EX}{vulnerable_templates}{Style.RESET_ALL}")
-
-
-        # === Save Data ===
-       
-        training_data.to_csv("synthetic_ca_logs_training.csv", index=False)
-        logger.info(f"{Fore.GREEN}\nTraining data saved to {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_training.csv'{Style.RESET_ALL}")
-
-        detection_data.to_csv("synthetic_ca_logs_detection.csv", index=False)
-        logger.info(f"{Fore.GREEN}Detection data saved to: {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_detection.csv'{Style.RESET_ALL}")
-
-    except KeyboardInterrupt:
-        print(f"{Fore.RED}\nOperation cancelled by user. Exiting gracefully.{Style.RESET_ALL}")
-        sys.exit(0)
-    except Exception as e:
-        logger.error(f"An unexpected error occurred: {e}", exc_info=True)
+    main()        

@@ -1,11 +1,10 @@
-# certifeye_utils.py
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
 CertifEye - Utility Functions
 Author: glides
-Version: 1.0
+Version: 0.9.1
 
 This module contains helper functions used across CertifEye scripts.
 """
