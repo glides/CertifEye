@@ -98,7 +98,7 @@ CertifEye/
    Install the required Python packages using `requirements.txt`:
 
    ```bash
-   pip install -r requirements.txt
+   pip install -r certifeye/requirements.txt
    ```
 
    **Note**: Ensure you have all necessary dependencies, including `xgboost`, `shap`, `imblearn`, `colorama`, `ruamel.yaml`, and `tqdm`.
