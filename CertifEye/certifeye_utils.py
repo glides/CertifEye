@@ -4,7 +4,7 @@
 """
 CertifEye - Utility Functions
 Author: glides
-Version: 0.9.1
+Version: 0.9.2
 
 This module contains helper functions used across CertifEye scripts.
 """
@@ -17,17 +17,58 @@ import smtplib
 from email.mime.text import MIMEText
 from colorama import init, Fore, Style
 import sys
+import yaml
 from tqdm import tqdm
+from datetime import datetime
+import os
+import hashlib
+import math
 
 # Initialize colorama
 init(autoreset=True)
 
 # === Configure Logging ===
 
-logger = logging.getLogger('CertifEye-Utils')
+def get_logger(name):
+    """
+    Configures and returns a logger with the specified name.
 
-# Define function to print ASCII banner
+    Args:
+        name (str): Name of the logger.
+
+    Returns:
+        logging.Logger: Configured logger.
+    """
+    logger = logging.getLogger(name)
+    if not logger.handlers:
+        logger.setLevel(logging.DEBUG)
+
+        # File handler
+        file_handler = logging.FileHandler(f'{name}.log')
+        file_handler.setLevel(logging.INFO)
+
+        # Console handler with tqdm support
+        console_handler = TqdmLoggingHandler()
+        console_handler.setLevel(logging.INFO)
+
+        # Logging formatters
+        file_formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')
+        console_formatter = logging.Formatter('%(message)s')
+
+        file_handler.setFormatter(file_formatter)
+        console_handler.setFormatter(console_formatter)
+
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
+
+    return logger
+
+# === ASCII Banner Function ===
+
 def print_banner():
+    """
+    Prints the ASCII art banner for CertifEye.
+    """
     ascii_banner = f"""
 {Fore.CYAN}
 {Fore.CYAN}   ___         _   _  __{Fore.YELLOW} ___         
@@ -39,14 +80,15 @@ def print_banner():
     """
     tagline = f"{Fore.CYAN}Certif{Fore.YELLOW}Eye{Style.RESET_ALL} -{Fore.LIGHTBLACK_EX} An AD CS Abuse Detection Tool\n{Style.RESET_ALL}"
     author = f"{Fore.WHITE}Author: {Fore.LIGHTBLACK_EX}glides <glid3s@protonmail.com>{Style.RESET_ALL}"
-    version = f"{Fore.WHITE}Version: {Fore.LIGHTBLACK_EX}0.9\n{Style.RESET_ALL}"
+    version = f"{Fore.WHITE}Version: {Fore.LIGHTBLACK_EX}0.9.2\n{Style.RESET_ALL}"
 
     print(ascii_banner)
     print(tagline)
     print(author)
     print(version)
 
-# Custom TqdmLoggingHandler for console output
+# === Custom Logging Handler for TQDM Compatibility ===
+
 class TqdmLoggingHandler(logging.StreamHandler):
     """
     Custom logging handler to work with tqdm progress bars.
@@ -61,6 +103,45 @@ class TqdmLoggingHandler(logging.StreamHandler):
             self.flush()
         except Exception:
             self.handleError(record)
+
+# === Configuration Loading Function ===
+
+def load_config(config_path='config.yaml'):
+    """
+    Loads the configuration from a YAML file, handling environment variables.
+
+    Args:
+        config_path (str): Path to the configuration file.
+
+    Returns:
+        dict: Configuration dictionary.
+    """
+    try:
+        with open(config_path, 'r') as file:
+            # Use yaml.SafeLoader to avoid arbitrary code execution
+            # Handle environment variables in the config
+            class EnvVarLoader(yaml.SafeLoader):
+                pass
+
+            # Add a constructor for environment variables
+            def env_var_constructor(loader, node):
+                value = loader.construct_scalar(node)
+                if value.startswith('${') and value.endswith('}'):
+                    env_var = value[2:-1]
+                    return os.getenv(env_var)
+                else:
+                    return value
+
+            EnvVarLoader.add_constructor('!ENV', env_var_constructor)
+
+            config = yaml.load(file, Loader=EnvVarLoader)
+        return config
+    except FileNotFoundError:
+        print(f"{Fore.RED}Configuration file {config_path} not found.{Style.RESET_ALL}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"{Fore.RED}Error loading configuration: {e}{Style.RESET_ALL}")
+        sys.exit(1)
 
 # === Helper Functions ===
 
@@ -108,7 +189,7 @@ def is_authorized_for_client_auth(requester_name, authorized_users):
         bool: True if authorized, False otherwise.
     """
     if isinstance(requester_name, str):
-        return requester_name.lower() in authorized_users
+        return requester_name.lower() in [user.lower() for user in authorized_users]
     else:
         return False
 
@@ -129,196 +210,209 @@ def sanitize_request_data(request_data):
             sanitized_data[field] = '[REDACTED]'
     return sanitized_data
 
-def detect_abuse(
-    request_data,
-    clf,
-    feature_cols,
-    pattern,
-    vulnerable_templates,
-    validity_threshold,
-    templates_requiring_approval,
-    authorized_client_auth_users,
-    training_mode,
-    disposition_categories,
-    return_features=False
-):
+def parse_dates(df, date_columns):
     """
-    Detects potential abuse in a certificate request.
+    Parses date columns in a DataFrame.
 
     Args:
-        request_data (dict): The request data.
-        clf (sklearn.pipeline.Pipeline): Trained model pipeline.
-        feature_cols (list): List of feature columns.
-        pattern (re.Pattern): Compiled regex pattern of privileged keywords.
-        vulnerable_templates (list): List of vulnerable templates.
-        validity_threshold (float): Threshold for unusual validity periods.
-        templates_requiring_approval (list): Templates that require approval.
-        authorized_client_auth_users (list): Authorized users for client auth.
-        training_mode (str): Training mode ('supervised', 'unsupervised', or 'hybrid').
-        disposition_categories (list): List of disposition categories used during training.
-        return_features (bool): Whether to return feature values.
+        df (pd.DataFrame): The DataFrame containing date columns.
+        date_columns (list): List of date column names.
 
     Returns:
-        tuple: (abuse_pred, abuse_prob, feature_values) or (abuse_pred, abuse_prob)
+        pd.DataFrame: DataFrame with parsed dates.
     """
-    try:
-        # Convert to DataFrame
-        request_df = pd.DataFrame([request_data])
+    for col in date_columns:
+        df[col] = pd.to_datetime(df[col], errors='coerce')
+    return df
 
-        # Replace missing values in critical fields with default values
-        request_df.fillna({
-            'RequesterName': '',
-            'CertificateTemplate': '',
-            'CertificateIssuedCommonName': '',
-            'CertificateSubject': '',
-            'CertificateValidityStart': '',
-            'CertificateValidityEnd': '',
-            'EnhancedKeyUsage': '',
-            'CertificateSANs': ''
-        }, inplace=True)
-
-        # Handle multi-line 'CertificateSANs'
-        request_df['CertificateSANs'] = request_df['CertificateSANs'].astype(str).str.replace('\n', ' ').str.replace('\r', ' ')
-
-        # === Feature Engineering ===
-
-        # Privileged Entry Flags
-        request_df['Privileged_IssuedCN'] = request_df['CertificateIssuedCommonName'].apply(
-            flag_privileged_entries, args=(pattern,))
-        request_df['Privileged_CertificateSubject'] = request_df['CertificateSubject'].apply(
-            flag_privileged_entries, args=(pattern,))
-        request_df['Privileged_CertificateSANs'] = request_df['CertificateSANs'].apply(
-            flag_privileged_entries, args=(pattern,))
-
-        # Time-based Features
-        request_df['RequestSubmissionTime'] = pd.to_datetime(request_df['RequestSubmissionTime'], errors='coerce')
-        if pd.isnull(request_df['RequestSubmissionTime']).any():
-            request_df['RequestHour'] = 0
-            request_df['Is_Off_Hours'] = 0
-            request_df['RequestWindow'] = pd.to_datetime('1970-01-01')
-        else:
-            request_df['RequestHour'] = request_df['RequestSubmissionTime'].dt.hour
-            off_hours_start = 19  # Should match the value used during training
-            off_hours_end = 7     # Should match the value used during training
-            request_df['Is_Off_Hours'] = request_df['RequestHour'].apply(
-                lambda x: 1 if x >= off_hours_start or x < off_hours_end else 0
-            )
-            request_df['RequestWindow'] = request_df['RequestSubmissionTime'].dt.floor('h')
-
-        # Validity Period
-        request_df['CertificateValidityStart'] = pd.to_datetime(
-            request_df['CertificateValidityStart'], errors='coerce')
-        request_df['CertificateValidityEnd'] = pd.to_datetime(
-            request_df['CertificateValidityEnd'], errors='coerce')
-        request_df['CertificateValidityDuration'] = (
-            request_df['CertificateValidityEnd'] - request_df['CertificateValidityStart']
-        ).dt.days.fillna(0)
-        request_df['Unusual_Validity_Period'] = request_df['CertificateValidityDuration'].apply(
-            lambda x: 1 if x > validity_threshold else 0
-        )
-
-        # Vulnerable Template Flag
-        request_df['Vulnerable_Template'] = request_df['CertificateTemplate'].apply(
-            lambda x: 1 if x in vulnerable_templates else 0
-        )
-
-        # Disposition Status Encoding
-        if 'RequestDisposition' in request_df.columns:
-            request_df['RequestDisposition'] = request_df['RequestDisposition'].fillna('')
-        else:
-            request_df['RequestDisposition'] = ''
-
-        # Perform one-hot encoding using the saved disposition categories
-        for category in disposition_categories:
-            column_name = f'Disposition_{category}'
-            request_df[column_name] = (request_df['RequestDisposition'] == category).astype(int)
-        # Drop the 'RequestDisposition' column as it's no longer needed
-        request_df.drop('RequestDisposition', axis=1, inplace=True)
-
-        # High Request Volume (Need to calculate 'Requests_Per_Hour' similar to training)
-        # For a single request, we need to set 'High_Request_Volume' appropriately
-        # Since we likely don't have historical data here, we can set it to 0
-        # Alternatively, we can modify our approach for this feature
-        request_df['Requests_Per_Hour'] = 1  # Default to 1 for new request
-        request_volume_threshold = 50  # Should match the threshold used during training
-        request_df['High_Request_Volume'] = 0  # Default to 0 unless you have data to compute it
-
-        # Ensure all expected columns are present
-        missing_cols = [col for col in feature_cols if col not in request_df.columns]
-        if missing_cols:
-            for col in missing_cols:
-                request_df[col] = 0  # Add missing columns with default value of 0
-
-        # Reorder columns to match feature_cols
-        request_df = request_df[feature_cols]
-
-        # Select features
-        request_X = request_df.copy()
-
-        # Handle missing or infinite values
-        request_X.replace([np.inf, -np.inf], np.nan, inplace=True)
-        request_X.fillna(0, inplace=True)
-
-        if training_mode in ['supervised', 'hybrid']:
-            # Predict abuse
-            abuse_prob = clf.predict_proba(request_X)[:, 1]
-            abuse_pred = clf.predict(request_X)
-            if return_features:
-                feature_values = request_X.iloc[0].to_dict()
-                return abuse_pred[0], abuse_prob[0], feature_values
-            else:
-                return abuse_pred[0], abuse_prob[0]
-        else:
-            # Unsupervised prediction
-            anomaly_score = clf.decision_function(request_X)
-            abuse_pred = 1 if anomaly_score[0] < 0 else 0
-            abuse_prob = -anomaly_score[0]
-            if return_features:
-                feature_values = request_X.iloc[0].to_dict()
-                return abuse_pred, abuse_prob, feature_values
-            else:
-                return abuse_pred, abuse_prob
-
-    except Exception as e:
-        logger.error(f"Error in detect_abuse function: {e}", exc_info=True)
-        if return_features:
-            return None, None, None
-        else:
-            return None, None
-
-def send_alert(email_recipient, request_data, probability, smtp_config):
+def calculate_entropy(s):
     """
-    Sends an email alert for a detected abuse.
+    Calculates the Shannon entropy of a string.
 
     Args:
-        email_recipient (str): Recipient email address.
-        request_data (dict): Request data.
-        probability (float): Probability of abuse.
-        smtp_config (dict): SMTP configuration.
+        s (str): Input string.
+
+    Returns:
+        float: Entropy value.
+    """
+    if not s:
+        return 0.0
+    prob = [float(s.count(c)) / len(s) for c in set(s)]
+    entropy = - sum([p * math.log(p) / math.log(2.0) for p in prob])
+    return entropy
+
+# === Additional Utility Functions ===
+
+def setup_logging(level=logging.INFO):
+    """
+    Sets up the logging configuration for scripts.
+
+    Args:
+        level (int): Logging level.
 
     Returns:
         None
     """
-    sanitized_data = sanitize_request_data(request_data)
-    msg_content = f"""
-    Potential ESC abuse detected.
-    Anomaly Score: {probability:.2f}
-    Details:
-    {sanitized_data}
-    """
-    msg = MIMEText(msg_content)
-    msg['Subject'] = 'CertifEye ESC Abuse Alert'
-    msg['From'] = smtp_config['sender_email']
-    msg['To'] = email_recipient
+    logger = logging.getLogger('CertifEye')
+    logger.setLevel(level)
+    if not logger.handlers:
+        # Console handler
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(level)
+        console_formatter = logging.Formatter('%(message)s')
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
 
-    try:
-        server = smtplib.SMTP(smtp_config['server'], smtp_config['port'])
-        server.starttls()
-        server.login(smtp_config['username'], smtp_config['password'])
-        server.send_message(msg)
-        server.quit()
-        logger.info(f"Alert sent to {email_recipient}")
-    except smtplib.SMTPException as e:
-        logger.error(f"SMTP error occurred: {e}", exc_info=True)
-    except Exception as e:
-        logger.error(f"Failed to send alert: {e}", exc_info=True)
+    # Prevent duplicate logs
+    logger.propagate = False
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    """
+    Handles uncaught exceptions by logging them.
+
+    Args:
+        exc_type: Exception type.
+        exc_value: Exception value.
+        exc_traceback: Exception traceback.
+
+    Returns:
+        None
+    """
+    logger = logging.getLogger('CertifEye')
+    logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+# Register the exception handler
+sys.excepthook = handle_exception
+
+def engineer_features(
+    df,
+    feature_cols,
+    validity_threshold,
+    pattern,
+    vulnerable_templates,
+    templates_requiring_approval,
+    authorized_client_auth_users,
+    training_mode,
+    detection_mode=False
+):
+    """
+    Engineer features from the given DataFrame.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame.
+        feature_cols (list): List of feature column names.
+        validity_threshold (float): Threshold for unusual validity periods.
+        pattern (re.Pattern): Compiled regex pattern for privileged keywords.
+        vulnerable_templates (list): List of vulnerable certificate templates.
+        templates_requiring_approval (list): Templates that require approval.
+        authorized_client_auth_users (list): List of authorized users.
+        training_mode (str): Training mode ('supervised' or 'unsupervised').
+        detection_mode (bool): Indicates if the function is used for detection.
+
+    Returns:
+        pd.DataFrame: DataFrame containing engineered features.
+    """
+    logger = logging.getLogger('CertifEye-Utils')
+
+    # Initialize feature values
+    df_features = pd.DataFrame()
+
+    # Privileged Account Flagging
+    df_features['Privileged_IssuedCN'] = df['CertificateIssuedCommonName'].apply(
+        flag_privileged_entries, args=(pattern,)
+    )
+    df_features['Privileged_CertificateSubject'] = df['CertificateSubject'].apply(
+        flag_privileged_entries, args=(pattern,)
+    )
+    df_features['Privileged_CertificateSANs'] = df['CertificateSANs'].apply(
+        flag_privileged_entries, args=(pattern,)
+    )
+
+    # Vulnerable Template Flag
+    df_features['Vulnerable_Template'] = df['CertificateTemplate'].apply(
+        lambda x: 1 if x in vulnerable_templates else 0
+    )
+
+    # Interaction Feature: Privileged and Vulnerable
+    df_features['Privileged_and_Vulnerable'] = (
+        df_features['Vulnerable_Template'] &
+        (
+            df_features['Privileged_IssuedCN'] |
+            df_features['Privileged_CertificateSubject'] |
+            df_features['Privileged_CertificateSANs']
+        )
+    ).astype(int)
+
+    # Time-Based Features
+    df['RequestSubmissionTime'] = pd.to_datetime(df['RequestSubmissionTime'], errors='coerce')
+    df['RequestHour'] = df['RequestSubmissionTime'].dt.hour
+    df_features['Is_Off_Hours'] = df['RequestHour'].apply(
+        lambda x: 1 if x >= 19 or x < 7 else 0
+    )
+
+    # Validity Period Anomalies
+    df['CertificateValidityStart'] = pd.to_datetime(df['CertificateValidityStart'], errors='coerce')
+    df['CertificateValidityEnd'] = pd.to_datetime(df['CertificateValidityEnd'], errors='coerce')
+    df['CertificateValidityDuration'] = (
+        df['CertificateValidityEnd'] - df['CertificateValidityStart']
+    ).dt.days
+    df_features['Unusual_Validity_Period'] = df['CertificateValidityDuration'].apply(
+        lambda x: 1 if x > validity_threshold else 0
+    )
+
+    # Disposition Status Encoding
+    df_features['Disposition_Issued'] = df['RequestDisposition'].apply(
+        lambda x: 1 if str(x).strip().lower() == 'issued' else 0
+    )
+
+    # Requester Behavior Analysis
+    if detection_mode:
+        # Placeholder values for detection mode
+        df_features['High_Request_Volume'] = 0
+        df_features['Requests_Last_24h'] = 0.0
+    else:
+        # Compute 'Requests_Last_24h' and 'High_Request_Volume' for training
+        df = df.sort_values(['RequesterName', 'RequestSubmissionTime'])
+        df.set_index('RequestSubmissionTime', inplace=True)
+        df['Requests_Last_24h'] = (
+            df.groupby('RequesterName')['RequestID']
+            .rolling('24h')
+            .count()
+            .reset_index(level=0, drop=True)
+        )
+        df.reset_index(inplace=True)
+        df['Requests_Last_24h'] = df['Requests_Last_24h'].fillna(0)
+        request_volume_threshold = (
+            df['Requests_Last_24h'].mean()
+            + 3 * df['Requests_Last_24h'].std()
+        )
+        df_features['High_Request_Volume'] = df['Requests_Last_24h'].apply(
+            lambda x: 1 if x > request_volume_threshold else 0
+        )
+        df_features['Requests_Last_24h'] = df['Requests_Last_24h']
+
+    # Field Length Features
+    df_features['Subject_Length'] = df['CertificateSubject'].apply(
+        lambda x: len(str(x)) if pd.notnull(x) else 0
+    )
+    df_features['SAN_Length'] = df['CertificateSANs'].apply(
+        lambda x: len(str(x)) if pd.notnull(x) else 0
+    )
+
+    # Entropy Features
+    df_features['Subject_Entropy'] = df['CertificateSubject'].apply(
+        lambda x: calculate_entropy(str(x)) if pd.notnull(x) else 0
+    )
+    df_features['SAN_Entropy'] = df['CertificateSANs'].apply(
+        lambda x: calculate_entropy(str(x)) if pd.notnull(x) else 0
+    )
+
+    # Ensure all expected columns are present
+    for col in feature_cols:
+        if col not in df_features.columns:
+            df_features[col] = 0  # Add missing columns with default value of 0
+
+    # Reorder columns to match the feature_cols
+    df_features = df_features[feature_cols]
+
+    return df_features

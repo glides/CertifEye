@@ -8,3 +8,7 @@ tqdm
 shap
 faker
 prompt-toolkit
+colorama
+ruamel.yaml
+xgboost
+pygemnts

@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-Synthetic CA Log Data Generator
+CertifEye - Synthetic CA Log Data Generator with Enhanced Anomaly Generation
 Author: glides
-Version: 0.9.1
+Version: 0.9.2
 
 This script generates synthetic CA log data similar in structure to the original data,
 without including any sensitive information. It generates training and detection datasets
-with configurable numbers of known abuses.
+with configurable numbers of known abuses and diverse anomaly cases.
 """
 
 import random
@@ -17,46 +17,41 @@ import numpy as np
 import argparse
 import logging
 import sys
-import yaml
 from datetime import datetime, timedelta
 from faker import Faker
 from colorama import init, Fore, Style
+from ruamel.yaml import YAML
+from tqdm import tqdm
+
+# Initialize Faker
+fake = Faker()
 
 # === Configuration ===
 
 DOMAIN_NAME = "contoso.com"  # Use a consistent domain name
+INTERNAL_DOMAIN = "intra.contoso.local"
 
-# Certificate Templates (Add more if needed)
-certificate_templates = [
-    "UserCertificate",
-    "MachineCertificate",
-    "AdminCertificate",
-    "ServerCertificate",
-    "EncryptionCertificate",
-    "VPNCertificate",
-    "EmailCertificate",
-    "SMIMECertificate",
-    "CodeSigningCertificate",
-    "DomainControllerCertificate"
-]
+# Certificate Templates and their EKUs
+certificate_templates = {
+    "UserCertificate": ["Client Authentication", "Secure Email"],
+    "MachineCertificate": ["Client Authentication", "Server Authentication"],
+    "AdminCertificate": ["Client Authentication", "Any Purpose"],
+    "ServerCertificate": ["Server Authentication"],
+    "EncryptionCertificate": ["Secure Email"],
+    "VPNCertificate": ["Client Authentication"],
+    "EmailCertificate": ["Secure Email"],
+    "SMIMECertificate": ["Secure Email"],
+    "CodeSigningCertificate": ["Code Signing"],
+    "DomainControllerCertificate": ["Client Authentication", "Server Authentication"],
+    "UnknownTemplate": ["UnknownUsage"],  # For anomaly generation
+}
 
 # Vulnerable Templates (Abuse Cases)
 vulnerable_templates = [
     "AdminCertificate",
     "DomainControllerCertificate",
-    "CodeSigningCertificate"
-]
-
-# Enhanced Key Usages (Add more if needed)
-enhanced_key_usages = [
-    "Client Authentication",
-    "Server Authentication",
-    "Code Signing",
-    "Secure Email",
-    "Time Stamping",
-    "OCSP Signing",
-    "Document Signing",
-    "Any Purpose"
+    "CodeSigningCertificate",
+    "ESC1"
 ]
 
 # Request Dispositions
@@ -78,18 +73,364 @@ privileged_keywords = [
 # Departments for machine names
 departments = ["Sales", "Marketing", "Engineering", "HR", "Finance", "IT", "Legal", "Operations"]
 
-# Initialize Faker
-fake = Faker()
+# EKUs indicative of potential abuse
+abuse_ekus = [
+    "Client Authentication",
+    "Smart Card Logon",
+    "PKINIT Client Authentication",
+    "Any Purpose",
+    "SubCA",
+    "Code Signing",
+    "UnknownUsage"
+]
 
 def get_parser():
     parser = argparse.ArgumentParser(description='CertifEye - Synthetic Data Generator')
     parser.add_argument('-tr', '--train_records', type=int, default=1000, help='Number of training records to generate')
-    parser.add_argument('-ta', '--train_abuses', type=int, default=6, help='Number of known abuses for training')
+    parser.add_argument('-ta', '--train_abuses', type=int, default=5, help='Number of known abuse cases for training')
     parser.add_argument('-dr', '--detect_records', type=int, default=5000, help='Number of detection records to generate')
-    parser.add_argument('-da', '--detect_abuses', type=int, default=20, help='Number of abuses in detection data')
+    parser.add_argument('-da', '--detect_abuses', type=int, default=5, help='Number of known abuse cases for detection')
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
-    # args = parser.parse_args()
+    parser.add_argument('-u', '--update-config', action='store_true', help='Update config.yaml with generated data')
     return parser
+
+def generate_username(first_name, last_name):
+    # Choose a naming convention
+    convention = random.choice(['first.last', 'firstlast', 'flast', 'firstl'])
+    if convention == 'first.last':
+        username = f"{first_name}.{last_name}".lower()
+    elif convention == 'firstlast':
+        username = f"{first_name}{last_name}".lower()
+    elif convention == 'flast':
+        username = f"{first_name[0]}{last_name}".lower()
+    else:  # 'firstl'
+        username = f"{first_name}{last_name[0]}".lower()
+    return username
+
+def generate_machine_name(department=None):
+    # Machine naming convention: dept-abbreviation + sequential number
+    dept = department[:3].lower() if department else 'gen'
+    number = random.randint(100, 999)
+    machine_name = f"{dept}-pc{number}"
+    return machine_name
+
+def generate_synthetic_ca_logs(num_records, num_abuses=0, num_anomalies=0, abuses_randomized=True, start_request_id=10000, label_anomalies=False):
+    data = []
+    known_abuse_request_ids = set()
+    known_anomaly_request_ids = set()
+    used_request_ids = set()
+
+    base_request_id = start_request_id  # Starting RequestID
+    base_serial_number = 1000000  # Starting SerialNumber
+
+    total_records = num_records
+    normal_records = total_records - num_abuses - num_anomalies
+
+    # Generate unique RequestIDs for normal records
+    normal_request_ids = random.sample(range(base_request_id, base_request_id + total_records * 2), normal_records)
+    used_request_ids.update(normal_request_ids)
+
+    # Generate normal records with progress bar
+    for idx, request_id in tqdm(enumerate(normal_request_ids), total=len(normal_request_ids), desc="Generating Normal Records"):
+        record = generate_normal_record(request_id, idx, base_serial_number)
+        data.append(record)
+
+    # Generate known abuse cases
+    abuse_records, abuse_ids = generate_abuse_cases(
+        num_abuses,
+        used_request_ids,
+        base_request_id,
+        base_request_id + total_records * 2
+    )
+    known_abuse_request_ids.update(abuse_ids)
+    data.extend(abuse_records)
+
+    # Generate anomaly cases
+    anomaly_records, anomaly_ids = generate_anomaly_cases(
+        num_anomalies,
+        used_request_ids,
+        base_request_id,
+        base_request_id + total_records * 2
+    )
+    known_anomaly_request_ids.update(anomaly_ids)
+    data.extend(anomaly_records)
+
+    # Create DataFrame
+    df = pd.DataFrame(data)
+
+    # Label anomalies as abuse if required
+    if label_anomalies:
+        df['Abuse_Flag'] = 0  # Initialize
+        df.loc[df['RequestID'].isin(known_abuse_request_ids), 'Abuse_Flag'] = 1
+        df.loc[df['RequestID'].isin(known_anomaly_request_ids), 'Abuse_Flag'] = 1
+
+    if abuses_randomized:
+        # Shuffle records
+        df = df.sample(frac=1, random_state=None).reset_index(drop=True)
+
+    return df, list(known_abuse_request_ids), list(known_anomaly_request_ids)
+
+def generate_normal_record(request_id, idx, base_serial_number):
+    # Decide if this record is for a user or a machine
+    is_machine_cert = random.random() < 0.3  # 30% chance it's a machine certificate
+
+    # Random selection for RequesterName
+    if is_machine_cert:
+        # Machine certificate
+        department = random.choice(departments)
+        machine_name = generate_machine_name(department)
+        requester_name = f"{DOMAIN_NAME}\\{machine_name}$"
+        certificate_issued_cn = f"{machine_name}.{INTERNAL_DOMAIN}"
+        certificate_subject = f"CN={machine_name}.{INTERNAL_DOMAIN}"
+
+        # CertificateSANs
+        san_types = ['DNS', 'IP']
+        sans = []
+        for _ in range(random.randint(1, 3)):
+            san_type = random.choice(san_types)
+            if san_type == 'DNS':
+                sans.append(f"DNS:{machine_name}.{INTERNAL_DOMAIN}")
+            elif san_type == 'IP':
+                sans.append(f"IP:{fake.ipv4_private()}")
+        certificate_sans = ", ".join(sans)
+
+    else:
+        # User certificate
+        first_name = fake.first_name()
+        last_name = fake.last_name()
+        username = generate_username(first_name, last_name)
+        requester_name = f"{DOMAIN_NAME}\\{username}"
+        certificate_issued_cn = f"{first_name} {last_name}"
+        certificate_subject = f"CN={first_name} {last_name}, OU={random.choice(departments)}, DC={INTERNAL_DOMAIN}"
+
+        # CertificateSANs
+        san_types = ['UPN', 'RFC822', 'URI']
+        sans = []
+        for _ in range(random.randint(1, 3)):
+            san_type = random.choice(san_types)
+            if san_type == 'UPN':
+                sans.append(f"UPN:{username}@{DOMAIN_NAME}")
+            elif san_type == 'RFC822':
+                sans.append(f"RFC822:{username}@{DOMAIN_NAME}")
+            elif san_type == 'URI':
+                sans.append(f"URI:https://{DOMAIN_NAME}/users/{username}")
+        certificate_sans = ", ".join(sans)
+
+    # CertificateTemplate
+    certificate_template = random.choice(list(certificate_templates.keys()))
+
+    # EnhancedKeyUsage
+    enhanced_key_usage = ", ".join(certificate_templates[certificate_template])
+
+    # CertificateValidity
+    validity_start = fake.date_time_this_decade(before_now=True, after_now=False)
+    validity_end = validity_start + timedelta(days=random.randint(365, 365 * 5))
+
+    # RequestSubmissionTime
+    request_submission_time = validity_start
+
+    # RequestDisposition
+    request_disposition = "Issued"  # Always set to "Issued"
+
+    # SerialNumber
+    serial_number = base_serial_number + idx
+
+    record = {
+        "RequestID": request_id,
+        "RequesterName": requester_name,
+        "CertificateTemplate": certificate_template,
+        "CertificateIssuedCommonName": certificate_issued_cn,
+        "CertificateSubject": certificate_subject,
+        "CertificateSANs": certificate_sans,
+        "EnhancedKeyUsage": enhanced_key_usage,
+        "CertificateValidityStart": validity_start.strftime('%Y-%m-%d %H:%M:%S'),
+        "CertificateValidityEnd": validity_end.strftime('%Y-%m-%d %H:%M:%S'),
+        "SerialNumber": serial_number,
+        "RequestSubmissionTime": request_submission_time.strftime('%Y-%m-%d %H:%M:%S'),
+        "RequestDisposition": request_disposition
+    }
+
+    return record
+
+def generate_abuse_cases(num_abuses, used_request_ids, id_range_start, id_range_end):
+    abuses = []
+    abuse_ids = set()
+
+    for _ in tqdm(range(num_abuses), desc="Generating Abuse Cases"):
+        # Assign a random unique RequestID
+        while True:
+            request_id = random.randint(id_range_start, id_range_end)
+            if request_id not in used_request_ids:
+                used_request_ids.add(request_id)
+                abuse_ids.add(request_id)
+                break
+
+        # Low-level requester
+        first_name = fake.first_name()
+        last_name = fake.last_name()
+        username = generate_username(first_name, last_name)
+        requester_name = f"{DOMAIN_NAME}\\{username}"
+
+        # Generate certificate details with only one field containing a privileged keyword
+        certificate_subject = f"CN={first_name} {last_name}, OU={random.choice(departments)}, DC={INTERNAL_DOMAIN}"
+        certificate_sans = f"UPN:{username}@{DOMAIN_NAME}, DNS:{first_name.lower()}.{DOMAIN_NAME}"
+        certificate_issued_cn = f"{first_name} {last_name}"
+
+        # Choose one field to contain the privileged keyword
+        abuse_field = random.choice(['subject', 'sans', 'common_name'])
+        privileged_keyword = random.choice(privileged_keywords)
+
+        if abuse_field == 'subject':
+            certificate_subject = f"CN={privileged_keyword}, OU={random.choice(departments)}, DC={INTERNAL_DOMAIN}"
+        elif abuse_field == 'sans':
+            certificate_sans = f"UPN:{privileged_keyword.lower()}@{DOMAIN_NAME}"
+        else:  # 'common_name'
+            certificate_issued_cn = privileged_keyword
+
+        # Ensure the use of a vulnerable template
+        certificate_template = random.choice(vulnerable_templates)
+
+        # Enhanced Key Usage includes critical usages
+        enhanced_key_usage = "Client Authentication, Smart Card Logon"
+
+        # Certificate Validity
+        validity_start = fake.date_time_this_decade(before_now=True, after_now=False)
+        validity_end = validity_start + timedelta(days=random.randint(365, 365 * 5))
+
+        # Request Submission Time
+        request_submission_time = validity_start
+
+        # Request Disposition
+        request_disposition = "Issued"
+
+        # SerialNumber
+        serial_number = random.randint(1000000, 9999999)
+
+        record = {
+            "RequestID": request_id,
+            "RequesterName": requester_name,
+            "CertificateTemplate": certificate_template,
+            "CertificateIssuedCommonName": certificate_issued_cn,
+            "CertificateSubject": certificate_subject,
+            "CertificateSANs": certificate_sans,
+            "EnhancedKeyUsage": enhanced_key_usage,
+            "CertificateValidityStart": validity_start.strftime('%Y-%m-%d %H:%M:%S'),
+            "CertificateValidityEnd": validity_end.strftime('%Y-%m-%d %H:%M:%S'),
+            "SerialNumber": serial_number,
+            "RequestSubmissionTime": request_submission_time.strftime('%Y-%m-%d %H:%M:%S'),
+            "RequestDisposition": request_disposition,
+            # Label as abuse
+            "Abuse_Flag": 1
+        }
+
+        abuses.append(record)
+
+    return abuses, abuse_ids
+
+def generate_anomaly_cases(num_anomalies, used_request_ids, id_range_start, id_range_end):
+    anomalies = []
+    anomaly_ids = set()
+
+    for _ in tqdm(range(num_anomalies), desc="Generating Anomaly Cases"):
+        # Assign a random unique RequestID
+        while True:
+            request_id = random.randint(id_range_start, id_range_end)
+            if request_id not in used_request_ids:
+                used_request_ids.add(request_id)
+                anomaly_ids.add(request_id)
+                break
+
+        # Random selection for RequesterName
+        first_name = fake.first_name()
+        last_name = fake.last_name()
+        username = generate_username(first_name, last_name)
+        requester_name = f"{DOMAIN_NAME}\\{username}"
+
+        # Choose anomaly types
+        anomaly_type = random.choice(['unusual_template', 'high_volume', 'invalid_fields', 'unauthorized_eku', 'long_validity', 'off_hours'])
+
+        # Initialize default values
+        certificate_template = random.choice(list(certificate_templates.keys()))
+        certificate_issued_cn = f"{first_name} {last_name}"
+        certificate_subject = f"CN={certificate_issued_cn}, OU={random.choice(departments)}, DC={INTERNAL_DOMAIN}"
+        certificate_sans = f"UPN:{username}@{DOMAIN_NAME}"
+        enhanced_key_usage = ", ".join(certificate_templates.get(certificate_template, []))
+
+        # Modify based on anomaly type
+        if anomaly_type == 'unusual_template':
+            certificate_template = "UnknownTemplate"
+        elif anomaly_type == 'high_volume':
+            # Simulate by creating multiple requests with the same RequesterName
+            pass  # Handled during feature engineering
+        elif anomaly_type == 'invalid_fields':
+            certificate_subject = "CN=???@@@###, OU=???@@@###, DC=Unknown"
+            certificate_sans = "UPN:invalid@@domain"
+        elif anomaly_type == 'unauthorized_eku':
+            enhanced_key_usage = ", ".join(random.sample(abuse_ekus, k=random.randint(1, len(abuse_ekus))))
+        elif anomaly_type == 'long_validity':
+            # Set an unusually long validity period
+            validity_start = fake.date_time_this_decade(before_now=True, after_now=False)
+            validity_end = validity_start + timedelta(days=random.randint(1825, 3650))  # 5 to 10 years
+        elif anomaly_type == 'off_hours':
+            # Set request submission time to off-hours
+            request_submission_time = fake.date_time_this_decade(before_now=True, after_now=False)
+            request_submission_time = request_submission_time.replace(hour=random.choice(range(0, 6)))  # 12 AM to 6 AM
+        else:
+            # Default anomaly (long validity)
+            validity_start = fake.date_time_this_decade(before_now=True, after_now=False)
+            validity_end = validity_start + timedelta(days=random.randint(1095, 1825))  # 3 to 5 years
+
+        # Certificate Validity (if not set)
+        if 'validity_start' not in locals():
+            validity_start = fake.date_time_this_decade(before_now=True, after_now=False)
+        if 'validity_end' not in locals():
+            validity_end = validity_start + timedelta(days=random.randint(365, 365 * 5))
+
+        # Request Submission Time (if not set)
+        if 'request_submission_time' not in locals():
+            request_submission_time = validity_start
+
+        # Request Disposition
+        request_disposition = "Issued"
+
+        # SerialNumber
+        serial_number = random.randint(1000000, 9999999)
+
+        record = {
+            "RequestID": request_id,
+            "RequesterName": requester_name,
+            "CertificateTemplate": certificate_template,
+            "CertificateIssuedCommonName": certificate_issued_cn,
+            "CertificateSubject": certificate_subject,
+            "CertificateSANs": certificate_sans,
+            "EnhancedKeyUsage": enhanced_key_usage,
+            "CertificateValidityStart": validity_start.strftime('%Y-%m-%d %H:%M:%S'),
+            "CertificateValidityEnd": validity_end.strftime('%Y-%m-%d %H:%M:%S'),
+            "SerialNumber": serial_number,
+            "RequestSubmissionTime": request_submission_time.strftime('%Y-%m-%d %H:%M:%S'),
+            "RequestDisposition": request_disposition,
+            # Label as abuse
+            "Abuse_Flag": 1
+        }
+
+        anomalies.append(record)
+
+    return anomalies, anomaly_ids
+
+def update_config(training_abuse_ids, privileged_keywords, vulnerable_templates):
+    config_path = "config.yaml"
+    yaml = YAML()
+    yaml.preserve_quotes = True
+
+    with open(config_path, 'r') as file:
+        config = yaml.load(file)
+
+    config['known_abuse_request_ids'] = training_abuse_ids
+    config['privileged_keywords'] = privileged_keywords
+    config['vulnerable_templates'] = vulnerable_templates
+
+    with open(config_path, 'w') as file:
+        yaml.dump(config, file)
 
 def main(args=None):
     parser = get_parser()
@@ -125,42 +466,32 @@ def main(args=None):
         logger.addHandler(file_handler)
         logger.addHandler(console_handler)
 
-# === Parse Command-Line Arguments ===
-
-    parser = argparse.ArgumentParser(description='CertifEye - Synthetic Data Generator')
-    parser.add_argument('-tr', '--train_records', type=int, default=1000, help='Number of training records to generate')
-    parser.add_argument('-ta', '--train_abuses', type=int, default=6, help='Number of known abuses for training')
-    parser.add_argument('-dr', '--detect_records', type=int, default=5000, help='Number of detection records to generate')
-    parser.add_argument('-da', '--detect_abuses', type=int, default=20, help='Number of abuses in detection data')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
-    args = parser.parse_args()
-
     if args.verbose:
         console_handler.setLevel(logging.DEBUG)
 
     try:
-        # print_banner()
-
         # === Generate Training Data ===
 
-        logger.info(f"{Fore.WHITE}Generating training data with {args.train_records} records and {args.train_abuses} known abuses...{Style.RESET_ALL}")
-        # Place known abuses at the end of training data
-        training_data, training_abuse_ids = generate_synthetic_ca_logs(
-            num_records=args.train_records + args.train_abuses,
+        logger.info(f"{Fore.WHITE}Generating training data with {args.train_records} records, {args.train_abuses} known abuses, and 10 anomalies...{Style.RESET_ALL}")
+        training_data, training_abuse_ids, training_anomaly_ids = generate_synthetic_ca_logs(
+            num_records=args.train_records + args.train_abuses + 10,
             num_abuses=args.train_abuses,
+            num_anomalies=10,
             abuses_randomized=False,
-            start_request_id=10000
+            start_request_id=10000,
+            label_anomalies=True  # Label anomalies as abuses in training data
         )
 
         # === Generate Detection Data ===
 
-        logger.info(f"{Fore.WHITE}Generating detection data with {args.detect_records} records and {args.detect_abuses} abuses...{Style.RESET_ALL}")
-        # Randomize abuses in detection data
-        detection_data, detection_abuse_ids = generate_synthetic_ca_logs(
-            num_records=args.detect_records,
+        logger.info(f"{Fore.WHITE}Generating detection data with {args.detect_records} records, {args.detect_abuses} known abuses, and 10 anomalies...{Style.RESET_ALL}")
+        detection_data, detection_abuse_ids, detection_anomaly_ids = generate_synthetic_ca_logs(
+            num_records=args.detect_records + args.detect_abuses + 10,
             num_abuses=args.detect_abuses,
+            num_anomalies=10,
             abuses_randomized=True,
-            start_request_id=20000  # Ensure RequestIDs do not overlap with training data
+            start_request_id=20000,
+            label_anomalies=False  # Do not label anomalies in detection data
         )
 
         # === Output Summary ===
@@ -169,269 +500,45 @@ def main(args=None):
         training_abuse_ids_sorted = sorted(training_abuse_ids)
         logger.info(f"{Fore.WHITE}\nKnown abuse Request IDs for training data: {Fore.CYAN}{training_abuse_ids_sorted}{Style.RESET_ALL}")
 
+        # Output known anomaly Request IDs for training data
+        training_anomaly_ids_sorted = sorted(training_anomaly_ids)
+        logger.info(f"{Fore.WHITE}Anomaly Request IDs for training data: {Fore.YELLOW}{training_anomaly_ids_sorted}{Style.RESET_ALL}")
 
         # Output known abuse Request IDs for detection data
         detection_abuse_ids_sorted = sorted(detection_abuse_ids)
-        logger.info(f"{Fore.WHITE}Abuse Request IDs in detection data: {Fore.YELLOW}{detection_abuse_ids_sorted}{Style.RESET_ALL}{Style.RESET_ALL}")
+        logger.info(f"{Fore.WHITE}Known abuse Request IDs for detection data: {Fore.CYAN}{detection_abuse_ids_sorted}{Style.RESET_ALL}")
 
+        # Output anomaly Request IDs for detection data
+        detection_anomaly_ids_sorted = sorted(detection_anomaly_ids)
+        logger.info(f"{Fore.WHITE}Anomaly Request IDs for detection data: {Fore.YELLOW}{detection_anomaly_ids_sorted}{Style.RESET_ALL}")
 
         # Output privileged keywords used
         logger.info(f"{Fore.WHITE}Privileged keywords used: {Fore.LIGHTBLACK_EX}{privileged_keywords}{Style.RESET_ALL}")
 
-
         # Output vulnerable templates used
         logger.info(f"{Fore.WHITE}Vulnerable templates used: {Fore.LIGHTBLACK_EX}{vulnerable_templates}{Style.RESET_ALL}")
 
-
         # === Save Data ===
-        
+
         training_data.to_csv("synthetic_ca_logs_training.csv", index=False)
         logger.info(f"{Fore.GREEN}\nTraining data saved to {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_training.csv'{Style.RESET_ALL}")
 
         detection_data.to_csv("synthetic_ca_logs_detection.csv", index=False)
         logger.info(f"{Fore.GREEN}Detection data saved to: {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_detection.csv'{Style.RESET_ALL}")
 
+        # === Update Config ===
+        if args.update_config:
+            update_config(training_abuse_ids_sorted, privileged_keywords, vulnerable_templates)
+            logger.info(f"{Fore.GREEN}Config file updated with generated data.{Style.RESET_ALL}")
+
     except KeyboardInterrupt:
-        print(f"{Fore.RED}\nOperation cancelled by user. Exiting gracefully.{Style.RESET_ALL}")
-        sys.exit(0)
+        print(f"{Fore.RED}\nOperation cancelled by user. Returning to console.{Style.RESET_ALL}")
+        return
     except Exception as e:
-        logger.error(f"An unexpected error occurred: {e}", exc_info=True)
-
-# === User and Machine Naming Conventions ===
-
-def generate_username(first_name, last_name):
-    # Choose a naming convention
-    convention = random.choice(['first.last', 'firstlast', 'flast', 'firstl'])
-    if convention == 'first.last':
-        username = f"{first_name}.{last_name}".lower()
-    elif convention == 'firstlast':
-        username = f"{first_name}{last_name}".lower()
-    elif convention == 'flast':
-        username = f"{first_name[0]}{last_name}".lower()
-    else:  # 'firstl'
-        username = f"{first_name}{last_name[0]}".lower()
-    return username
-
-def generate_machine_name(department=None):
-    # Machine naming convention: dept-abbreviation + sequential number
-    dept = department[:3].lower() if department else 'gen'
-    number = random.randint(100, 999)
-    machine_name = f"{dept}-pc{number}"
-    return machine_name
-
-# === Data Generation Functions ===
-
-def generate_synthetic_ca_logs(num_records, num_abuses=0, abuses_randomized=True, start_request_id=10000):
-    data = []
-    known_abuse_request_ids = set()
-    used_request_ids = set()
-
-    base_request_id = start_request_id  # Starting RequestID
-    base_serial_number = 1000000  # Starting SerialNumber
-
-    total_records = num_records
-    normal_records = total_records - num_abuses
-
-    # Generate unique RequestIDs for normal records
-    normal_request_ids = random.sample(range(base_request_id, base_request_id + total_records * 2), normal_records)
-    used_request_ids.update(normal_request_ids)
-
-    # Generate normal records
-    for idx, request_id in enumerate(normal_request_ids):
-        # Decide if this record is for a user or a machine
-        is_machine_cert = random.random() < 0.3  # 30% chance it's a machine certificate
-
-        # Random selection for RequesterName
-        if is_machine_cert:
-            # Machine certificate
-            department = random.choice(departments)
-            machine_name = generate_machine_name(department)
-            requester_name = f"{DOMAIN_NAME}\\{machine_name}$"
-            certificate_issued_cn = f"{machine_name}.{DOMAIN_NAME}"
-            certificate_subject = f"CN={machine_name}.{DOMAIN_NAME}"
-
-            # CertificateSANs
-            san_types = ['DNS', 'IP']
-            sans = []
-            for _ in range(random.randint(1, 3)):
-                san_type = random.choice(san_types)
-                if san_type == 'DNS':
-                    sans.append(f"DNS:{machine_name}.{DOMAIN_NAME}")
-                elif san_type == 'IP':
-                    sans.append(f"IP:{fake.ipv4_private()}")
-            certificate_sans = ", ".join(sans)
-
-        else:
-            # User certificate
-            first_name = fake.first_name()
-            last_name = fake.last_name()
-            username = generate_username(first_name, last_name)
-            requester_name = f"{DOMAIN_NAME}\\{username}"
-            certificate_issued_cn = f"{first_name} {last_name}"
-            certificate_subject = f"CN={first_name} {last_name}, OU={random.choice(departments)}, DC={DOMAIN_NAME}"
-
-            # CertificateSANs
-            san_types = ['email', 'UPN', 'URI']
-            sans = []
-            for _ in range(random.randint(1, 3)):
-                san_type = random.choice(san_types)
-                if san_type == 'email':
-                    sans.append(f"RFC822:{username}@{DOMAIN_NAME}")
-                elif san_type == 'UPN':
-                    sans.append(f"UPN:{username}@{DOMAIN_NAME}")
-                elif san_type == 'URI':
-                    sans.append(f"URI:https://{DOMAIN_NAME}/users/{username}")
-            certificate_sans = ", ".join(sans)
-
-        # CertificateTemplate
-        certificate_template = random.choice(certificate_templates)
-
-        # EnhancedKeyUsage
-        eku_list = random.sample(enhanced_key_usages, k=random.randint(1, 3))
-        enhanced_key_usage = ", ".join(eku_list)
-
-        # Validity Period
-        validity_start = fake.date_time_between(start_date='-1y', end_date='now')
-        validity_days = random.randint(365, 1095)  # Valid for 1 to 3 years
-        validity_end = validity_start + timedelta(days=validity_days)
-
-        # SerialNumber
-        serial_number = base_serial_number + idx
-
-        # RequestSubmissionTime
-        request_submission_time = validity_start - timedelta(days=random.randint(0, 30), hours=random.randint(0, 23))
-
-        # RequestDisposition
-        request_disposition = random.choices(
-            request_dispositions,
-            weights=[0.85, 0.1, 0.03, 0.02],  # Heavier weight to 'Issued'
-            k=1
-        )[0]
-
-        # Potentially include a privileged keyword in the RequesterName for admins
-        if random.random() < 0.05:  # 5% chance
-            privileged_keyword = random.choice(privileged_keywords)
-            requester_name = f"{DOMAIN_NAME}\\{privileged_keyword}{random.randint(1,99)}"
-
-        # Create the record
-        record = {
-            "RequestID": request_id,
-            "RequesterName": requester_name,
-            "CertificateTemplate": certificate_template,
-            "CertificateIssuedCommonName": certificate_issued_cn,
-            "CertificateSubject": certificate_subject,
-            "CertificateSANs": certificate_sans,
-            "EnhancedKeyUsage": enhanced_key_usage,
-            "CertificateValidityStart": validity_start.strftime('%Y-%m-%d %H:%M:%S'),
-            "CertificateValidityEnd": validity_end.strftime('%Y-%m-%d %H:%M:%S'),
-            "SerialNumber": serial_number,
-            "RequestSubmissionTime": request_submission_time.strftime('%Y-%m-%d %H:%M:%S'),
-            "RequestDisposition": request_disposition
-        }
-
-        data.append(record)
-
-    df = pd.DataFrame(data)
-
-    # Generate abuse cases
-    if num_abuses > 0:
-        abuse_records, abuse_ids = generate_abuse_cases(
-            num_abuses,
-            used_request_ids,
-            base_request_id,
-            base_request_id + total_records * 2
-        )
-        known_abuse_request_ids.update(abuse_ids)
-        abuse_df = pd.DataFrame(abuse_records)
-
-        # Combine normal and abuse records
-        df = pd.concat([df, abuse_df], ignore_index=True)
-
-        if abuses_randomized:
-            # Shuffle records
-            df = df.sample(frac=1, random_state=None).reset_index(drop=True)
-
-    return df, list(known_abuse_request_ids)
-
-def generate_abuse_cases(num_abuses, used_request_ids, id_range_start, id_range_end):
-    abuses = []
-    abuse_ids = set()
-
-    for _ in range(num_abuses):
-        # Assign a random unique RequestID that isn't already used
-        while True:
-            request_id = random.randint(id_range_start, id_range_end)
-            if request_id not in used_request_ids:
-                used_request_ids.add(request_id)
-                abuse_ids.add(request_id)
-                break
-
-        # Low-level requester
-        first_name = fake.first_name()
-        last_name = fake.last_name()
-        username = generate_username(first_name, last_name)
-        requester_name = f"{DOMAIN_NAME}\\{username}"
-
-        # Deliberate abuse patterns with high-level accounts in Subject/SANs
-        privileged_keyword = random.choice(privileged_keywords)
-
-        # CertificateTemplate known to be vulnerable
-        certificate_template = random.choice(vulnerable_templates)
-
-        # CertificateIssuedCommonName and CertificateSubject
-        certificate_issued_cn = f"{privileged_keyword}.{DOMAIN_NAME}"
-        certificate_subject = f"CN={certificate_issued_cn}"
-
-        # CertificateSANs containing privileged keyword
-        san_types = ['DNS', 'IP']
-        sans = []
-        for _ in range(random.randint(1, 3)):
-            san_type = random.choice(san_types)
-            if san_type == 'DNS':
-                sans.append(f"DNS:{privileged_keyword}.{DOMAIN_NAME}")
-            elif san_type == 'IP':
-                sans.append(f"IP:{fake.ipv4_private()}")
-        certificate_sans = ", ".join(sans)
-
-        # EnhancedKeyUsage including sensitive usages
-        eku_list = ["Client Authentication", "Server Authentication"]
-        enhanced_key_usage = ", ".join(eku_list)
-
-        # Validity Period (unusually long)
-        validity_start = fake.date_time_between(start_date='-1y', end_date='now')
-        validity_days = random.randint(1825, 3650)  # 5 to 10 years
-        validity_end = validity_start + timedelta(days=validity_days)
-
-        # SerialNumber
-        serial_number = request_id  # Or use a separate serial number sequence if needed
-
-        # RequestSubmissionTime
-        request_submission_time = validity_start - timedelta(days=random.randint(0, 5), hours=random.randint(0, 23))
-
-        # RequestDisposition (usually 'Issued' for abuse cases)
-        request_disposition = "Issued"
-
-        # Create the abuse record
-        record = {
-            "RequestID": request_id,
-            "RequesterName": requester_name,
-            "CertificateTemplate": certificate_template,
-            "CertificateIssuedCommonName": certificate_issued_cn,
-            "CertificateSubject": certificate_subject,
-            "CertificateSANs": certificate_sans,
-            "EnhancedKeyUsage": enhanced_key_usage,
-            "CertificateValidityStart": validity_start.strftime('%Y-%m-%d %H:%M:%S'),
-            "CertificateValidityEnd": validity_end.strftime('%Y-%m-%d %H:%M:%S'),
-            "SerialNumber": serial_number,
-            "RequestSubmissionTime": request_submission_time.strftime('%Y-%m-%d %H:%M:%S'),
-            "RequestDisposition": request_disposition
-        }
-
-        abuses.append(record)
-
-    return abuses, abuse_ids
-
-# === Main Execution ===
+        logger.error(f"An unexpected error occurred: {e}", exc_info=args.verbose)
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
 
 if __name__ == '__main__':
-    main()        
+    main()
