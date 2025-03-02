@@ -62,18 +62,26 @@ CertifEye/
 
 ## Features
 
-- **ESC Misconfiguration Detection**: CertifEye detects potential abuses related to multiple ESC misconfigurations:
-- **Hybrid Detection Approach**: Combines rule-based detections with AI anomaly detection to identify both known and unknown abuse patterns.
-- **Anomaly Detection**: Detects subtle indicators of potential abuse through advanced machine learning algorithms.
-- **Human-Readable Explanations**: Provides clear, human-understandable explanations for detections, helping administrators understand and respond to potential security incidents.
-- **Real-Time Monitoring**: Continuously scans CA logs to detect potential abuse as it happens.
-- **Privileged Account Detection**: Flags certificates issued to high-privilege accounts.
-- **Time-Based Anomalies**: Identifies requests made during unusual hours or at abnormal frequencies.
-- **Template Vulnerability Identification**: Detects usage of vulnerable or misconfigured certificate templates.
-- **Comprehensive Logging**: Provides detailed logs for auditing and analysis, with standardized logging across all components.
-- **Integration Ready**: Easily integrates with SIEM and SOAR platforms for centralized monitoring and automated response.
-- **Customizable Alerts**: Configurable alerting mechanisms, including email notifications.
-- **Centralized Configuration Management**: Simplifies configuration through a unified `config.yaml` file.
+- **ESC Misconfiguration Detection**: CertifEye detects potential abuses related to multiple Enterprise Security Configuration (ESC) misconfigurations, helping to identify and prevent known vulnerabilities in AD CS.
+
+- **Hybrid Detection Approach**: Combines rule-based detections with AI-driven anomaly detection to identify both known and unknown abuse patterns, enhancing detection capabilities.
+
+- **Anomaly Detection**: Utilizes advanced machine learning algorithms to detect subtle indicators of potential abuse that may not be caught by rule-based methods alone.
+
+- **Human-Readable Explanations**: Provides clear, understandable explanations for detections, helping administrators interpret and respond to potential security incidents effectively.
+
+- **Privileged Account Detection**: Flags certificates issued to high-privilege accounts, alerting to potential unauthorized access or misuse.
+
+- **Time-Based Anomaly Detection**: Identifies certificate requests made during unusual hours or at abnormal frequencies, which may indicate suspicious activities.
+
+- **Template Vulnerability Identification**: Detects the use of vulnerable or misconfigured certificate templates that could be exploited for unauthorized access.
+
+- **Comprehensive Logging**: Maintains detailed logs for auditing and analysis, with standardized logging across all components to facilitate troubleshooting and compliance.
+
+- **Customizable Alerts**: Provides configurable alert mechanisms, including email notifications, allowing for timely responses to potential threats.
+
+- **Centralized Configuration Management**: Simplifies setup and maintenance through a unified `config.yaml` file, enabling easy adjustments to settings and thresholds.
+
 
 ---
 
