@@ -12,10 +12,18 @@ An AI-powered detection system for identifying potential abuse of Active Directo
 - [Installation](#installation)
 - [Usage](#usage)
   - [Starting the CertifEye Console](#starting-the-certifeye-console)
-  - [Available Commands](#available-commands)
-- [Configuration File (`config.yaml`)](#configuration-file-configyaml)
+  - [Using CertifEye with Your Own Data](#using-certifeye-with-your-own-data)
+    - [Step 1: Export Your CA Logs](#step-1-export-your-ca-logs)
+    - [Step 2: (Optional) Prune Data](#step-2-optional-prune-data)
+    - [Step 3: Train the Model](#step-3-train-the-model)
+    - [Step 4: Detect Abuse](#step-4-detect-abuse)
+  - [Testing CertifEye with Synthetic Data (Optional)](#testing-certifeye-with-synthetic-data-optional)
+    - [Step 1: Generate Synthetic Data](#step-1-generate-synthetic-data)
+    - [Step 2: Train the Model with Synthetic Data](#step-2-train-the-model-with-synthetic-data)
+    - [Step 3: Detect Abuse with Synthetic Data](#step-3-detect-abuse-with-synthetic-data)
+  - [Configuration File (`config.yaml`)](#configuration-file-configyaml)
+  - [Important Considerations](#important-considerations)
 - [Exporting CA Logs Using PowerShell](#exporting-ca-logs-using-powershell)
-- [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
@@ -26,7 +34,7 @@ An AI-powered detection system for identifying potential abuse of Active Directo
 
 ## Overview
 
-**CertifEye** is a powerful tool designed to detect and prevent the abuse of Active Directory Certificate Services (AD CS) misconfigurations. By leveraging advanced machine learning algorithms, anomaly detection techniques, and rule-based logic, CertifEye analyzes CA logs to identify suspicious activities, potential exploits, and unauthorized privilege escalations. The system is flexible, scalable, and can be integrated into existing security infrastructures to enhance your organization's security posture.
+**CertifEye** is a powerful tool designed to detect and prevent the abuse of Active Directory Certificate Services (AD CS) misconfigurations, including multiple Enterprise Security Configuration (ESC) abuses. By leveraging advanced machine learning algorithms, anomaly detection techniques, and rule-based logic, CertifEye analyzes CA logs to identify suspicious activities, potential exploits, and unauthorized privilege escalations. The system is flexible, scalable, and can be integrated into existing security infrastructures to enhance your organization's security posture.
 
 ---
 
@@ -54,10 +62,10 @@ CertifEye/
 
 ## Features
 
+- **ESC Misconfiguration Detection**: CertifEye detects potential abuses related to multiple ESC misconfigurations:
 - **Hybrid Detection Approach**: Combines rule-based detections with AI anomaly detection to identify both known and unknown abuse patterns.
 - **Anomaly Detection**: Detects subtle indicators of potential abuse through advanced machine learning algorithms.
 - **Human-Readable Explanations**: Provides clear, human-understandable explanations for detections, helping administrators understand and respond to potential security incidents.
-- **Algorithm Flexibility**: Supports both Random Forest and XGBoost classifiers, selectable via configuration.
 - **Real-Time Monitoring**: Continuously scans CA logs to detect potential abuse as it happens.
 - **Privileged Account Detection**: Flags certificates issued to high-privilege accounts.
 - **Time-Based Anomalies**: Identifies requests made during unusual hours or at abnormal frequencies.
@@ -98,216 +106,6 @@ CertifEye/
 ---
 
 ## Usage
-
-### Starting the CertifEye Console
-
-To start the CertifEye console application:
-
-```bash
-python certifeye/certifeye.py
-```
-
-You'll see the following prompt:
-
-```plaintext
-Welcome to CertifEye. Type 'help' to list commands.
-
-(CertifEye) >
-```
-
-### Available Commands
-
-- `help`: List available commands.
-- `generate_synthetic_data`: Generate synthetic CA log data.
-- `train_model`: Train the machine learning model.
-- `prune_data`: Prune the dataset.
-- `detect_abuse`: Detect potential abuse.
-- `exit`: Exit the CertifEye console.
-
-#### **Command Usage**
-
-- **Generate Synthetic Data**
-
-  ```bash
-  (CertifEye) > generate_synthetic_data --help
-  ```
-
-  **Example**:
-
-  ```bash
-  (CertifEye) > generate_synthetic_data -tr 1000 -ta 5 -dr 5000 -da 5 --update-config
-  ```
-
-  - `-tr 1000`: Generate 1000 training records.
-  - `-ta 5`: Include 5 known abuse cases in the training data.
-  - `-dr 5000`: Generate 5000 detection records.
-  - `-da 5`: Include 5 known abuse cases in the detection data.
-  - **Anomalies**: An additional 10 anomaly cases will be generated in both datasets.
-  - `--update-config`: Update `config.yaml` with generated data.
-
-- **Train the Model**
-
-  ```bash
-  (CertifEye) > train_model -v
-  ```
-
-- **Prune Data**
-
-  ```bash
-  (CertifEye) > prune_data --sample-size 3000
-  ```
-
-- **Detect Abuse**
-
-  ```bash
-  (CertifEye) > detect_abuse -v -f
-  ```
-
-**Note**: Commands support autocomplete for both commands and arguments.
-
----
-
-## Configuration File (`config.yaml`)
-
-Before running the scripts, ensure that `config.yaml` is properly configured with your environment-specific settings. The configuration file contains settings such as:
-
-- **Paths**:
-  - `ca_logs_full_path`: Path to the full CA logs CSV file.
-  - `ca_logs_pruned_path`: Path where the pruned CA logs CSV will be saved.
-  - `ca_logs_detection_path`: Path to the CA logs CSV file used for detection.
-  - `model_output_path`: Path where the trained model will be saved.
-  - `params_output_path`: Path where model parameters will be saved.
-
-- **Known Request IDs**:
-  - `known_abuse_request_ids`: List of Request IDs known to be abuses (used in training).
-  - `known_good_request_ids`: List of Request IDs known to be legitimate.
-
-- **Privileged Keywords**: Keywords associated with high-privilege accounts.
-
-- **Vulnerable Templates**: List of vulnerable or misconfigured certificate templates.
-
-- **Algorithm Selection**: Choose the machine learning algorithm.
-
-  ```yaml
-  algorithm: 'xgboost'  # Options: 'random_forest', 'xgboost'
-  ```
-
-- **Training Mode**: Specify the training approach (`supervised`, `unsupervised`, or `hybrid`).
-
-- **SMTP Settings**: Configure email settings for alert notifications.
-
-  **Security Note**: Do not store plaintext passwords in the configuration file. Use environment variables or a secrets manager to handle sensitive information.
-
-- **Custom Thresholds**:
-  - `validity_threshold`: Threshold in days for unusual certificate validity periods.
-  - `request_volume_threshold`: Threshold for high request volumes.
-  - `classification_threshold`: Threshold for classifying a request as an abuse.
-
-- **Off-Hours Definition**:
-  - `off_hours_start`: Start hour for off-hours (e.g., 22 for 10 PM).
-  - `off_hours_end`: End hour for off-hours (e.g., 6 for 6 AM).
-
-**Example Configuration:**
-
-```yaml
-paths:
-  ca_logs_full_path: "C:/CA/exported_ca_logs.csv"
-  ca_logs_pruned_path: "C:/CA/pruned_ca_logs.csv"
-  ca_logs_detection_path: "C:/CA/new_requests.csv"
-  model_output_path: "certifeye_model.joblib"
-  params_output_path: "certifeye_params.pkl"
-
-known_abuse_request_ids:
-  - 10001
-  - 10002
-  - 10003
-  - 10004
-  - 10005
-
-known_good_request_ids:
-  - 28311
-  - 28323
-  - 28609
-
-privileged_keywords:
-  - "Administrator"
-  - "Admin"
-  - "Domain Admins"
-  - "Enterprise Admins"
-  - "Schema Admins"
-  - "krbtgt"
-  - "Root"
-  - "BackupAdmin"
-  - "SecurityAdmin"
-
-vulnerable_templates:
-  - "SubCA"
-  - "EnrollmentAgent"
-  - "EnrollmentAgentOffline"
-  - "DomainController"
-  - "ESC1"
-
-templates_requiring_approval: []
-
-authorized_client_auth_users: []
-
-algorithm: 'xgboost'  # Options: 'random_forest', 'xgboost'
-
-training_mode: "supervised"
-
-smtp:
-  server: 'smtp.yourdomain.com'
-  port: 587
-  username: 'alert@yourdomain.com'
-  password: !ENV '${SMTP_PASSWORD}'  # Fetch from environment variable
-  sender_email: 'alert@yourdomain.com'
-
-validity_threshold: 730           # Validity threshold in days
-request_volume_threshold: 50      # Request volume threshold
-classification_threshold: 0.625   # Classification threshold
-
-off_hours_start: 22               # Off-hours start hour
-off_hours_end: 6                  # Off-hours end hour
-```
-
-**Security Note**: Ensure that `config.yaml` is secured and not exposed publicly, as it may contain sensitive information. Use environment variables or a secrets manager for credentials.
-
----
-
-## Exporting CA Logs Using PowerShell
-
-To ensure CertifEye has all the necessary data for accurate detection, it's important to collect comprehensive Certificate Authority (CA) logs that include fields such as the issued subject and SANs.
-
-**Steps to Export CA Logs:**
-
-1. **Place the Script**
-
-   Copy `Export-CALogs.ps1` from the `scripts` directory to a location on your CA server.
-
-2. **Run the Script**
-
-   Open PowerShell **as an administrator** and execute:
-
-   ```powershell
-   .\Export-CALogs.ps1 -OutputCsv "C:\CA\exported_ca_logs.csv"
-   ```
-
-3. **Verify the Exported Logs**
-
-   Ensure the logs are saved to the specified path and contain the expected data.
-
-4. **Update `config.yaml`**
-
-   Set the `ca_logs_full_path` in your `config.yaml`:
-
-   ```yaml
-   paths:
-     ca_logs_full_path: "C:/CA/exported_ca_logs.csv"
-   ```
-
----
-
-## Usage Examples
 
 ### Starting the CertifEye Console
 
@@ -387,7 +185,7 @@ If you wish to test CertifEye without using production data, you can generate sy
   - **Anomalies**: An additional 10 anomaly cases will be generated in both datasets.
   - `--update-config`: Update `config.yaml` with generated data.
 
-**Note:** Generating synthetic data is intended for **testing purposes only** and allows you to explore CertifEye's capabilities without using real CA logs.
+**Note:** Generating synthetic data is intended for **testing purposes only** and allows you to explore CertifEye's capabilities without using real CA logs. **You do not need to prune the synthetic data**, as the script allows you to specify the size of the generated datasets.
 
 #### **Step 2: Train the Model with Synthetic Data**
 
@@ -414,23 +212,11 @@ This analyzes the synthetic detection data using the model trained on synthetic 
 
 ---
 
-### Recap of the Process
-
-- **Production Use:**
-  - **Train** the model on your **real CA logs**.
-  - **Prune** data only if necessary to manage large datasets.
-  - **Detect** abuse using actual new CA logs from your environment.
-
-- **Testing or Demonstration:**
-  - **Generate** synthetic data for training and detection.
-  - **Train** the model on synthetic training data.
-  - **Detect** abuse using synthetic detection data.
-
----
-
 ### Configuration File (`config.yaml`)
 
-Ensure that `config.yaml` is correctly configured with paths to your own CA logs when working in production. For example:
+Ensure that `config.yaml` is correctly configured with paths to your own CA logs when working in production.
+
+**Example Configuration:**
 
 ```yaml
 paths:
@@ -439,7 +225,14 @@ paths:
   ca_logs_detection_path: "C:/CA/new_requests.csv"        # New CA logs for detection
   model_output_path: "certifeye_model.joblib"
   params_output_path: "certifeye_params.pkl"
+
+# Other configurations...
 ```
+
+**Important Notes:**
+
+- When testing with synthetic data, the paths in `config.yaml` are updated automatically if you use the `--update-config` flag with `generate_synthetic_data`.
+- In a production environment, you should update `config.yaml` manually with the correct paths to your CA logs.
 
 ---
 
@@ -457,15 +250,36 @@ paths:
 
 ---
 
-### Additional Notes
+## Exporting CA Logs Using PowerShell
 
-- **Synthetic Data Limitations:**
-  - Synthetic data may not capture all the nuances of real-world data.
-  - Models trained on synthetic data may not perform optimally in a production environment.
+To ensure CertifEye has all the necessary data for accurate detection, it's important to collect comprehensive Certificate Authority (CA) logs that include fields such as the issued subject and SANs.
 
-- **Pruning Real Data:**
-  - Use `prune_data` if you need to reduce the size of large CA log datasets for training purposes.
-  - This can help manage computational resources and training time.
+**Steps to Export CA Logs:**
+
+1. **Place the Script**
+
+   Copy `Export-CALogs.ps1` from the `scripts` directory to a location on your CA server.
+
+2. **Run the Script**
+
+   Open PowerShell **as an administrator** and execute:
+
+   ```powershell
+   .\Export-CALogs.ps1 -OutputCsv "C:\CA\exported_ca_logs.csv"
+   ```
+
+3. **Verify the Exported Logs**
+
+   Ensure the logs are saved to the specified path and contain the expected data.
+
+4. **Update `config.yaml`**
+
+   Set the `ca_logs_full_path` in your `config.yaml`:
+
+   ```yaml
+   paths:
+     ca_logs_full_path: "C:/CA/exported_ca_logs.csv"
+   ```
 
 ---
 
@@ -473,31 +287,7 @@ paths:
 
 Contributions are welcome!
 
-1. **Fork the Repository**
-
-2. **Create a Feature Branch**
-
-   ```bash
-   git checkout -b feature/YourFeature
-   ```
-
-3. **Commit Your Changes**
-
-   ```bash
-   git commit -m "Add your feature"
-   ```
-
-4. **Push to Your Branch**
-
-   ```bash
-   git push origin feature/YourFeature
-   ```
-
-5. **Open a Pull Request**
-
-   - Ensure your code adheres to the project's coding standards.
-   - Include appropriate unit tests.
-   - Provide a clear description of the changes and the problem they solve.
+Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to contribute to CertifEye.
 
 ---
 
@@ -514,6 +304,8 @@ We appreciate the contributions from the open-source community and the support o
 ---
 
 ## Security Considerations
+
+Please refer to the [SECURITY.md](SECURITY.md) file for information on how to report security vulnerabilities.
 
 - **Sensitive Information**: Ensure that any sensitive data, such as credentials, are secured and not committed to version control.
 - **Compliance**: Always comply with your organization's policies and legal regulations when handling certificate data and logs.
@@ -532,5 +324,3 @@ For further assistance, please contact:
 ---
 
 **Note**: For detailed information on each script and its usage, please refer to the comments within the scripts and ensure you have configured `config.yaml` appropriately.
-
----
