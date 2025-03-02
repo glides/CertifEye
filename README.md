@@ -307,17 +307,79 @@ To ensure CertifEye has all the necessary data for accurate detection, it's impo
 
 ---
 
-## Examples
+## Usage Examples
 
-### **Using the CertifEye Console**
+### Starting the CertifEye Console
 
-**Step 1: Generate Synthetic Data**
+To start the CertifEye console application:
+
+```bash
+python certifeye/certifeye.py
+```
+
+You'll see the following prompt:
+
+```plaintext
+Welcome to CertifEye. Type 'help' to list commands.
+
+(CertifEye) >
+```
+
+### Using CertifEye with Your Own Data
+
+**Important Note:** In a production environment, you should use your actual CA logs to train the model and detect potential abuses. The synthetic data generation is intended for **testing purposes only**.
+
+#### **Step 1: Export Your CA Logs**
+
+Follow the instructions in the [Exporting CA Logs Using PowerShell](#exporting-ca-logs-using-powershell) section to export your CA logs from your production environment.
+
+#### **Step 2: (Optional) Prune Data**
+
+If your CA logs are very large and you need to reduce the dataset size for training, you can use the `prune_data` command to create a manageable subset.
+
+```bash
+(CertifEye) > prune_data --sample-size 3000
+```
+
+- **Explanation:**
+  - `--sample-size 3000`: Sample 3000 normal requests for training.
+
+This step is **optional** and only necessary if you need to reduce the size of your dataset. If you're working with smaller datasets or wish to use all available data, you can skip this step.
+
+#### **Step 3: Train the Model**
+
+```bash
+(CertifEye) > train_model -v
+```
+
+- **Explanation:**
+  - `-v`: Increase verbosity to display more detailed output.
+
+This command trains the machine learning model using your pruned or full CA logs. Ensure that your `config.yaml` is properly configured with the paths to your CA logs.
+
+#### **Step 4: Detect Abuse**
+
+```bash
+(CertifEye) > detect_abuse -v -f
+```
+
+- **Explanation:**
+  - `-v`: Increase verbosity for detailed output.
+  - `-f`: Show feature contributions and explanations for detections.
+
+This command analyzes new CA logs to detect potential abuses using the trained model.
+
+### Testing CertifEye with Synthetic Data (Optional)
+
+If you wish to test CertifEye without using production data, you can generate synthetic data.
+
+#### **Step 1: Generate Synthetic Data**
 
 ```bash
 (CertifEye) > generate_synthetic_data -tr 1000 -ta 5 -dr 5000 -da 5 --update-config
 ```
 
-- **Explanation**:
+- **Explanation:**
   - `-tr 1000`: Generate 1000 training records.
   - `-ta 5`: Include 5 known abuse cases in the training data.
   - `-dr 5000`: Generate 5000 detection records.
@@ -325,33 +387,85 @@ To ensure CertifEye has all the necessary data for accurate detection, it's impo
   - **Anomalies**: An additional 10 anomaly cases will be generated in both datasets.
   - `--update-config`: Update `config.yaml` with generated data.
 
-**Step 2: Prune Data**
+**Note:** Generating synthetic data is intended for **testing purposes only** and allows you to explore CertifEye's capabilities without using real CA logs.
 
-```bash
-(CertifEye) > prune_data --sample-size 3000
-```
-
-- **Explanation**:
-  - `--sample-size 3000`: Sample 3000 normal requests for training.
-
-**Step 3: Train the Model**
+#### **Step 2: Train the Model with Synthetic Data**
 
 ```bash
 (CertifEye) > train_model -v
 ```
 
-- **Explanation**:
+- **Explanation:**
   - `-v`: Increase verbosity to display more detailed output.
 
-**Step 4: Detect Abuse**
+When testing with synthetic data, this command trains the model using the generated synthetic training data.
+
+#### **Step 3: Detect Abuse with Synthetic Data**
 
 ```bash
 (CertifEye) > detect_abuse -v -f
 ```
 
-- **Explanation**:
+- **Explanation:**
   - `-v`: Increase verbosity for detailed output.
   - `-f`: Show feature contributions and explanations for detections.
+
+This analyzes the synthetic detection data using the model trained on synthetic data.
+
+---
+
+### Recap of the Process
+
+- **Production Use:**
+  - **Train** the model on your **real CA logs**.
+  - **Prune** data only if necessary to manage large datasets.
+  - **Detect** abuse using actual new CA logs from your environment.
+
+- **Testing or Demonstration:**
+  - **Generate** synthetic data for training and detection.
+  - **Train** the model on synthetic training data.
+  - **Detect** abuse using synthetic detection data.
+
+---
+
+### Configuration File (`config.yaml`)
+
+Ensure that `config.yaml` is correctly configured with paths to your own CA logs when working in production. For example:
+
+```yaml
+paths:
+  ca_logs_full_path: "C:/CA/exported_ca_logs.csv"         # Your actual CA logs
+  ca_logs_pruned_path: "C:/CA/pruned_ca_logs.csv"         # Path for pruned logs (if pruning is used)
+  ca_logs_detection_path: "C:/CA/new_requests.csv"        # New CA logs for detection
+  model_output_path: "certifeye_model.joblib"
+  params_output_path: "certifeye_params.pkl"
+```
+
+---
+
+### Important Considerations
+
+- **Data Privacy and Compliance:**
+  - Ensure that you're compliant with your organization's policies and any legal regulations when handling CA logs and training data.
+  - Sensitive information should be protected and not shared or exposed.
+
+- **Model Retraining:**
+  - Periodically retrain the model with updated CA logs to maintain detection accuracy as patterns and behaviors change over time.
+
+- **Customization:**
+  - Adjust thresholds and configurations in `config.yaml` to suit your environment and requirements.
+
+---
+
+### Additional Notes
+
+- **Synthetic Data Limitations:**
+  - Synthetic data may not capture all the nuances of real-world data.
+  - Models trained on synthetic data may not perform optimally in a production environment.
+
+- **Pruning Real Data:**
+  - Use `prune_data` if you need to reduce the size of large CA log datasets for training purposes.
+  - This can help manage computational resources and training time.
 
 ---
 
