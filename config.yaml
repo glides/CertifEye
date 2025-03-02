@@ -6,11 +6,13 @@ paths:
   params_output_path: "certifeye_params.pkl"
 
 known_abuse_request_ids:
-- 10262
-- 10667
-- 10871
-- 11268
-- 11676
+- 10604
+- 16134
+- 21674
+- 22081
+- 25433
+- 27683
+- 29959
 known_good_request_ids: []
 
 privileged_keywords:
@@ -45,7 +47,7 @@ smtp:
 
 validity_threshold: 730           # Validity threshold in days
 request_volume_threshold: 50      # Request volume threshold
-classification_threshold: 0.7922     # Classification threshold
+classification_threshold: 0.561    # Classification threshold
 
 off_hours_start: 22               # Off-hours start hour (22:00 / 10 PM)
 off_hours_end: 6                  # Off-hours end hour (6:00 AM)

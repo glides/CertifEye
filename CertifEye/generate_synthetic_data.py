@@ -433,10 +433,6 @@ def update_config(training_abuse_ids, privileged_keywords, vulnerable_templates)
         yaml.dump(config, file)
 
 def main(args=None):
-    parser = get_parser()
-    if args is None:
-        args = sys.argv[1:]
-    args = parser.parse_args(args)
 
     # Initialize colorama
     init(autoreset=True)
@@ -446,6 +442,17 @@ def main(args=None):
     # Create logger
     logger = logging.getLogger('CertifEye-SyntheticDataGenerator')
     logger.setLevel(logging.DEBUG)
+
+    # === Parse Command-Line Arguments ===
+    parser = get_parser()
+    if args is None:
+        args = sys.argv[1:]
+    try:
+        args = parser.parse_args(args)
+    except SystemExit:
+        # Help message was displayed; return to console
+        return
+
 
     if not logger.handlers:
         # Create handlers

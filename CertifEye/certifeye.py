@@ -14,8 +14,7 @@ import argparse
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.styles import Style
-from prompt_toolkit.lexers import PygmentsLexer
-from pygments.lexers.shell import BashLexer
+from prompt_toolkit.lexers import Lexer
 
 # Import command modules
 import prune_data
@@ -41,10 +40,13 @@ COMMAND_ARGUMENTS = {
 # Define styles
 style = Style.from_dict({
     # Styles for the prompt
-    'prompt':        'ansicyan bold',
-    'path':          'ansiblue bold',
-    'command':       'ansiyellow bold',
-    'args':          'ansiwhite',
+    'prompt':        '#ffffff bold',  # White
+    'cyan':          '#00ffff bold',  # Cyan
+    'yellow':        '#ffff00 bold',  # Yellow
+    'command-teal': '#008888 bold',
+    'command-green': 'ansigreen bold',
+    'command-red': 'ansired bold',
+    'args':          'ansimagenta',
     # Autocomplete styles
     'completion-menu.completion': 'bg:#008888 #ffffff',
     'completion-menu.completion.current': 'bg:#00aaaa #000000',
@@ -97,22 +99,65 @@ class CertifEyeCompleter(Completer):
                         if cmd.startswith(word):
                             yield Completion(cmd, start_position=-len(word))
 
+class CommandLexer(Lexer):
+    def lex_document(self, document):
+        def get_line(i):
+            text = document.lines[i]
+            tokens = []
+            pos = 0  # Position in the text
+            index = 0  # Word index
+
+            while pos < len(text):
+                if text[pos].isspace():
+                    # Collect all whitespace
+                    space = ''
+                    while pos < len(text) and text[pos].isspace():
+                        space += text[pos]
+                        pos += 1
+                    tokens.append(('', space))
+                else:
+                    # Collect the next word
+                    start_pos = pos
+                    while pos < len(text) and not text[pos].isspace():
+                        pos += 1
+                    word = text[start_pos:pos]
+
+                    # Determine token class based on position and content
+                    if index == 0:
+                        # First word: command
+                        if word == 'exit':
+                            tokens.append(('class:command-red', word))
+                        elif word == 'help':
+                            tokens.append(('class:command-green', word))
+                        elif word in COMMANDS:
+                            tokens.append(('class:command-teal', word))
+                        else:
+                            tokens.append(('', word))
+                    else:
+                        # Subsequent words: arguments
+                        tokens.append(('class:args', word))
+
+                    index += 1
+            return tokens
+        return get_line
+
 def main():
     """
     Main function to run the CertifEye console application.
     """
     print_banner()
-    session = PromptSession(completer=CertifEyeCompleter(), style=style)
+    session = PromptSession(completer=CertifEyeCompleter(), style=style, lexer=CommandLexer())
 
     while True:
         try:
-            # Build the prompt message
+            # Build the prompt message with the colors
             prompt_message = [
-                ('class:prompt', '(Certif'),
-                ('class:path', 'Eye'),
+                ('class:prompt', '('),
+                ('class:cyan', 'Certif'),
+                ('class:yellow', 'Eye'),
                 ('class:prompt', ') > '),
             ]
-            user_input = session.prompt(prompt_message, lexer=PygmentsLexer(BashLexer))
+            user_input = session.prompt(prompt_message)
 
             cmd_parts = user_input.strip().split()
             if not cmd_parts:

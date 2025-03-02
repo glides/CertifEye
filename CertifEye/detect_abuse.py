@@ -157,18 +157,36 @@ def main(args=None):
 
         potential_abuses = 0  # Counter for detected abuses
 
+        # Initialize colorama
+        init(autoreset=True)
+
         # Use progress bar if not showing features for all requests and not analyzing specific requests
         use_progress_bar = not args.show_features and not args.request_id
 
         if use_progress_bar:
-            bar_format = '{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]'
+            # Colorize the description
+            desc = f"{Fore.YELLOW}Processing Requests{Style.RESET_ALL}"
+            
+            # Customize the bar format to include colors
+            bar_format = (
+                f"{Fore.YELLOW}"     # Left bar color
+                '{l_bar}'
+                f"{Fore.GREEN}"      # Progress bar color
+                '{bar}'
+                f"{Style.RESET_ALL}" # Reset color
+                f"{Style.BRIGHT}{Fore.LIGHTBLACK_EX}"     # Right bar color
+                '| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]'
+                f"{Style.RESET_ALL}" # Reset color
+            )
+            
             request_iter = tqdm(
                 detection_df.iterrows(),
                 total=total_requests,
-                desc='Processing Requests',
+                desc=desc,
                 unit='request',
                 bar_format=bar_format,
-                leave=True
+                leave=True,
+                colour=None  # You can omit this if customizing in bar_format
             )
         else:
             request_iter = detection_df.iterrows()
