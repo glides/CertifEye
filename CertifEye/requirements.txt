@@ -11,4 +11,4 @@ prompt-toolkit
 colorama
 ruamel.yaml
 xgboost
-pygemnts
+pygments
