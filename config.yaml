@@ -1,20 +1,56 @@
 paths:
-  ca_logs_full_path: "C:/CA/exported_ca_logs.csv"
-  ca_logs_pruned_path: "synthetic_ca_logs_training.csv"
-  ca_logs_detection_path: "synthetic_ca_logs_detection.csv"
-  model_output_path: "certifeye_model.joblib"
+  ca_logs_full_path: "C:/CA/exported_ca_logs.csv"             # Path to your actual CA logs
+  ca_logs_pruned_path: "synthetic_ca_logs_training.csv"       # Path for pruned logs (if pruning is used)
+  ca_logs_detection_path: "synthetic_ca_logs_detection.csv"   # Path for new CA logs to be analyzed for potential abuse
+  model_output_path: "certifeye_model.joblib"                 # Path where the trained model will be saved
+  scaler_output_path: "certifeye_scaler.joblib"               # Path where the scaler will be saved
+  anomaly_model_path: "certifeye_isolation_forest.joblib"     # Path where the Isolation Forest model will be saved
+  detection_results_path: "detection_results.csv"             # Path where detection results will be savedexit
   params_output_path: "certifeye_params.pkl"
 
+# Known Request IDs
 known_abuse_request_ids:
-- 10604
-- 16134
-- 21674
-- 22081
-- 25433
-- 27683
-- 29959
+- 10594
+- 11256
+- 11279
+- 11297
+- 11580
+- 12460
+- 12619
+- 12693
+- 12968
+- 13033
+- 13188
+- 13340
+- 13558
+- 13986
+- 14081
+- 14254
+- 14396
+- 14608
+- 14958
+- 14980
+- 15322
+- 15868
+- 15956
+- 16104
+- 16880
+- 16992
+- 17131
+- 17213
+- 17300
+- 17639
+- 17640
+- 17854
+- 17875
+- 18275
+- 18720
+- 18734
+- 18741
+- 19018
+- 19328
+- 19613
 known_good_request_ids: []
-
 privileged_keywords:
 - Admin
 - Administrator
@@ -30,24 +66,68 @@ vulnerable_templates:
 - DomainControllerCertificate
 - CodeSigningCertificate
 - ESC1
-templates_requiring_approval: []
+templates_requiring_approval:
+authorized_client_auth_users:
+- elizabeth.johnson
+- taylor.roberts
+- robert.henson
+- kim.mcdonald
+- calvin.valdez
+authorized_developers:
+- steven.williams
+- lisa.vargas
+- kathryn.martinez
+- james.smith
+- philip.valenzuela
+authorized_ca_operators:
+- caoperator1
+- caoperator2
+  # Users authorized to request CA certificates
 
-authorized_client_auth_users: []
+# Suspicious EKUs
+suspicious_ekus:
+- 'Any Purpose'
+- 'Certificate Request Agent'
+- 'Code Signing'
 
-algorithm: 'xgboost'  # Options: 'random_forest', 'xgboost'
+# Authorized Users for Suspicious EKUs
+authorized_users_for_suspicious_ekus:
+- alice.admin
+- bob.caop
+  # Users authorized to request certificates with suspicious EKUs
 
-training_mode: "supervised"
+# Threshold Configurations
+validity_threshold: 730
+request_volume_threshold: 50
+classification_threshold: 0.631
+off_hours_start: 22
+off_hours_end: 6
+max_historical_days: 90
+validity_zscore_threshold: 2.5
+enable_esc_checks: true
+enable_suspicious_eku_checks: true
+enable_privilege_escalation_checks: true
+enable_template_misuse_checks: true
+synthetic_data:
+  enable_auto_config_updates: true
+  flag_off_hours_as_abuse: false           # Set to true if off-hours requests should be flagged as abuse
+  benign_anomaly_probability: 0.05         # Probability of introducing benign anomalies in synthetic data
+  subtle_anomalies: true
+  anomaly_combinations:
+  - valid_template_with_suspicious_eku
+  - mismatched_san_and_requester
 
+# SMTP Configuration for Alerts
 smtp:
   server: 'smtp.yourdomain.com'
   port: 587
   username: 'alert@yourdomain.com'
-  password: 'your_password'  # Secure this appropriately
+  password: 'your_password'                 # Secure this appropriately
   sender_email: 'alert@yourdomain.com'
 
-validity_threshold: 730           # Validity threshold in days
-request_volume_threshold: 50      # Request volume threshold
-classification_threshold: 0.561    # Classification threshold
-
-off_hours_start: 22               # Off-hours start hour (22:00 / 10 PM)
-off_hours_end: 6                  # Off-hours end hour (6:00 AM)
+# Algorithm and Training Mode
+algorithm: 'xgboost'
+training_mode: 'supervised'
+valid_templates:
+- UserCertificate
+- MachineCertificate

@@ -116,6 +116,7 @@ def load_config(config_path='config.yaml'):
     Returns:
         dict: Configuration dictionary.
     """
+    global config
     try:
         with open(config_path, 'r') as file:
             # Use yaml.SafeLoader to avoid arbitrary code execution
@@ -316,6 +317,13 @@ def engineer_features(
 
     # Initialize feature values
     df_features = pd.DataFrame()
+
+    # GoldenCert EKU Features
+    df['has_any_purpose_eku'] = df['EnhancedKeyUsage'].str.contains('Any Purpose', case=False, na=False).astype(int)
+
+    # Privileged Account Detection
+    privileged_pattern = '|'.join(config['privileged_keywords'])
+    df['is_privileged_account'] = df['RequesterName'].str.contains(privileged_pattern, case=False, na=False).astype(int)
 
     # Privileged Account Flagging
     df_features['Privileged_IssuedCN'] = df['CertificateIssuedCommonName'].apply(

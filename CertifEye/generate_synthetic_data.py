@@ -6,7 +6,7 @@ CertifEye - Synthetic CA Log Data Generator with Enhanced Anomaly Generation
 Author: glides
 Version: 0.9.2
 
-This script generates synthetic CA log data similar in structure to the original data,
+This script generates synthetic CA log data similar in structure to you find in real logs,
 without including any sensitive information. It generates training and detection datasets
 with configurable numbers of known abuses and diverse anomaly cases.
 """
@@ -90,6 +90,7 @@ def get_parser():
     parser.add_argument('-ta', '--train_abuses', type=int, default=5, help='Number of known abuse cases for training')
     parser.add_argument('-dr', '--detect_records', type=int, default=5000, help='Number of detection records to generate')
     parser.add_argument('-da', '--detect_abuses', type=int, default=5, help='Number of known abuse cases for detection')
+    parser.add_argument('-an', '--anomalies', type=int, default=50, help='Number of anomalies to generate')
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
     parser.add_argument('-u', '--update-config', action='store_true', help='Update config.yaml with generated data')
     return parser
@@ -247,7 +248,8 @@ def generate_normal_record(request_id, idx, base_serial_number):
         "CertificateValidityEnd": validity_end.strftime('%Y-%m-%d %H:%M:%S'),
         "SerialNumber": serial_number,
         "RequestSubmissionTime": request_submission_time.strftime('%Y-%m-%d %H:%M:%S'),
-        "RequestDisposition": request_disposition
+        "RequestDisposition": request_disposition,
+        "EKU": enhanced_key_usage,  # Added EKU field
     }
 
     return record
@@ -257,7 +259,6 @@ def generate_abuse_cases(num_abuses, used_request_ids, id_range_start, id_range_
     abuse_ids = set()
 
     for _ in tqdm(range(num_abuses), desc="Generating Abuse Cases"):
-        # Assign a random unique RequestID
         while True:
             request_id = random.randint(id_range_start, id_range_end)
             if request_id not in used_request_ids:
@@ -265,18 +266,15 @@ def generate_abuse_cases(num_abuses, used_request_ids, id_range_start, id_range_
                 abuse_ids.add(request_id)
                 break
 
-        # Low-level requester
         first_name = fake.first_name()
         last_name = fake.last_name()
         username = generate_username(first_name, last_name)
         requester_name = f"{DOMAIN_NAME}\\{username}"
 
-        # Generate certificate details with only one field containing a privileged keyword
         certificate_subject = f"CN={first_name} {last_name}, OU={random.choice(departments)}, DC={INTERNAL_DOMAIN}"
         certificate_sans = f"UPN:{username}@{DOMAIN_NAME}, DNS:{first_name.lower()}.{DOMAIN_NAME}"
         certificate_issued_cn = f"{first_name} {last_name}"
 
-        # Choose one field to contain the privileged keyword
         abuse_field = random.choice(['subject', 'sans', 'common_name'])
         privileged_keyword = random.choice(privileged_keywords)
 
@@ -284,26 +282,16 @@ def generate_abuse_cases(num_abuses, used_request_ids, id_range_start, id_range_
             certificate_subject = f"CN={privileged_keyword}, OU={random.choice(departments)}, DC={INTERNAL_DOMAIN}"
         elif abuse_field == 'sans':
             certificate_sans = f"UPN:{privileged_keyword.lower()}@{DOMAIN_NAME}"
-        else:  # 'common_name'
+        else:
             certificate_issued_cn = privileged_keyword
 
-        # Ensure the use of a vulnerable template
         certificate_template = random.choice(vulnerable_templates)
-
-        # Enhanced Key Usage includes critical usages
         enhanced_key_usage = "Client Authentication, Smart Card Logon"
 
-        # Certificate Validity
         validity_start = fake.date_time_this_decade(before_now=True, after_now=False)
         validity_end = validity_start + timedelta(days=random.randint(365, 365 * 5))
-
-        # Request Submission Time
         request_submission_time = validity_start
-
-        # Request Disposition
         request_disposition = "Issued"
-
-        # SerialNumber
         serial_number = random.randint(1000000, 9999999)
 
         record = {
@@ -319,7 +307,6 @@ def generate_abuse_cases(num_abuses, used_request_ids, id_range_start, id_range_
             "SerialNumber": serial_number,
             "RequestSubmissionTime": request_submission_time.strftime('%Y-%m-%d %H:%M:%S'),
             "RequestDisposition": request_disposition,
-            # Label as abuse
             "Abuse_Flag": 1
         }
 
@@ -332,7 +319,6 @@ def generate_anomaly_cases(num_anomalies, used_request_ids, id_range_start, id_r
     anomaly_ids = set()
 
     for _ in tqdm(range(num_anomalies), desc="Generating Anomaly Cases"):
-        # Assign a random unique RequestID
         while True:
             request_id = random.randint(id_range_start, id_range_end)
             if request_id not in used_request_ids:
@@ -340,27 +326,22 @@ def generate_anomaly_cases(num_anomalies, used_request_ids, id_range_start, id_r
                 anomaly_ids.add(request_id)
                 break
 
-        # Random selection for RequesterName
         first_name = fake.first_name()
         last_name = fake.last_name()
         username = generate_username(first_name, last_name)
         requester_name = f"{DOMAIN_NAME}\\{username}"
 
-        # Choose anomaly types
         anomaly_type = random.choice(['unusual_template', 'high_volume', 'invalid_fields', 'unauthorized_eku', 'long_validity', 'off_hours'])
 
-        # Initialize default values
         certificate_template = random.choice(list(certificate_templates.keys()))
         certificate_issued_cn = f"{first_name} {last_name}"
         certificate_subject = f"CN={certificate_issued_cn}, OU={random.choice(departments)}, DC={INTERNAL_DOMAIN}"
         certificate_sans = f"UPN:{username}@{DOMAIN_NAME}"
         enhanced_key_usage = ", ".join(certificate_templates.get(certificate_template, []))
 
-        # Modify based on anomaly type
         if anomaly_type == 'unusual_template':
             certificate_template = "UnknownTemplate"
         elif anomaly_type == 'high_volume':
-            # Simulate by creating multiple requests with the same RequesterName
             pass  # Handled during feature engineering
         elif anomaly_type == 'invalid_fields':
             certificate_subject = "CN=???@@@###, OU=???@@@###, DC=Unknown"
@@ -368,32 +349,23 @@ def generate_anomaly_cases(num_anomalies, used_request_ids, id_range_start, id_r
         elif anomaly_type == 'unauthorized_eku':
             enhanced_key_usage = ", ".join(random.sample(abuse_ekus, k=random.randint(1, len(abuse_ekus))))
         elif anomaly_type == 'long_validity':
-            # Set an unusually long validity period
             validity_start = fake.date_time_this_decade(before_now=True, after_now=False)
-            validity_end = validity_start + timedelta(days=random.randint(1825, 3650))  # 5 to 10 years
+            validity_end = validity_start + timedelta(days=random.randint(1825, 3650))
         elif anomaly_type == 'off_hours':
-            # Set request submission time to off-hours
             request_submission_time = fake.date_time_this_decade(before_now=True, after_now=False)
-            request_submission_time = request_submission_time.replace(hour=random.choice(range(0, 6)))  # 12 AM to 6 AM
+            request_submission_time = request_submission_time.replace(hour=random.choice(range(0, 6)))
         else:
-            # Default anomaly (long validity)
             validity_start = fake.date_time_this_decade(before_now=True, after_now=False)
-            validity_end = validity_start + timedelta(days=random.randint(1095, 1825))  # 3 to 5 years
+            validity_end = validity_start + timedelta(days=random.randint(1095, 1825))
 
-        # Certificate Validity (if not set)
         if 'validity_start' not in locals():
             validity_start = fake.date_time_this_decade(before_now=True, after_now=False)
         if 'validity_end' not in locals():
             validity_end = validity_start + timedelta(days=random.randint(365, 365 * 5))
-
-        # Request Submission Time (if not set)
         if 'request_submission_time' not in locals():
             request_submission_time = validity_start
 
-        # Request Disposition
         request_disposition = "Issued"
-
-        # SerialNumber
         serial_number = random.randint(1000000, 9999999)
 
         record = {
@@ -409,7 +381,6 @@ def generate_anomaly_cases(num_anomalies, used_request_ids, id_range_start, id_r
             "SerialNumber": serial_number,
             "RequestSubmissionTime": request_submission_time.strftime('%Y-%m-%d %H:%M:%S'),
             "RequestDisposition": request_disposition,
-            # Label as abuse
             "Abuse_Flag": 1
         }
 
@@ -480,67 +451,68 @@ def main(args=None):
         # === Generate Training Data ===
 
         logger.info(f"{Fore.WHITE}Generating training data with {args.train_records} records, {args.train_abuses} known abuses, and 10 anomalies...{Style.RESET_ALL}")
-        training_data, training_abuse_ids, training_anomaly_ids = generate_synthetic_ca_logs(
-            num_records=args.train_records + args.train_abuses + 10,
-            num_abuses=args.train_abuses,
-            num_anomalies=10,
-            abuses_randomized=False,
-            start_request_id=10000,
-            label_anomalies=True  # Label anomalies as abuses in training data
-        )
+        try:
+            training_data, training_abuse_ids, training_anomaly_ids = generate_synthetic_ca_logs(
+                num_records=args.train_records,
+                num_abuses=args.train_abuses,
+                num_anomalies=args.anomalies,
+                abuses_randomized=False,
+                start_request_id=10000,
+                label_anomalies=True  # Label anomalies as abuses in training data
+            )
 
-        # === Generate Detection Data ===
+            # === Generate Detection Data ===
 
-        logger.info(f"{Fore.WHITE}Generating detection data with {args.detect_records} records, {args.detect_abuses} known abuses, and 10 anomalies...{Style.RESET_ALL}")
-        detection_data, detection_abuse_ids, detection_anomaly_ids = generate_synthetic_ca_logs(
-            num_records=args.detect_records + args.detect_abuses + 10,
-            num_abuses=args.detect_abuses,
-            num_anomalies=10,
-            abuses_randomized=True,
-            start_request_id=20000,
-            label_anomalies=False  # Do not label anomalies in detection data
-        )
+            logger.info(f"{Fore.WHITE}Generating detection data with {args.detect_records} records, {args.detect_abuses} known abuses, and 10 anomalies...{Style.RESET_ALL}")
+            detection_data, detection_abuse_ids, detection_anomaly_ids = generate_synthetic_ca_logs(
+                num_records=args.detect_records,
+                num_abuses=args.detect_abuses,
+                num_anomalies=args.anomalies,
+                abuses_randomized=True,
+                start_request_id=20000,
+                label_anomalies=False  # Do not label anomalies in detection data
+            )
 
-        # === Output Summary ===
+            # === Output Summary ===
 
-        # Output known abuse Request IDs for training data
-        training_abuse_ids_sorted = sorted(training_abuse_ids)
-        logger.info(f"{Fore.WHITE}\nKnown abuse Request IDs for training data: {Fore.CYAN}{training_abuse_ids_sorted}{Style.RESET_ALL}")
+            # Output known abuse Request IDs for training data
+            training_abuse_ids_sorted = sorted(training_abuse_ids)
+            logger.info(f"{Fore.WHITE}\nKnown abuse Request IDs for training data: {Fore.CYAN}{training_abuse_ids_sorted}{Style.RESET_ALL}")
 
-        # Output known anomaly Request IDs for training data
-        training_anomaly_ids_sorted = sorted(training_anomaly_ids)
-        logger.info(f"{Fore.WHITE}Anomaly Request IDs for training data: {Fore.YELLOW}{training_anomaly_ids_sorted}{Style.RESET_ALL}")
+            # Output known anomaly Request IDs for training data
+            training_anomaly_ids_sorted = sorted(training_anomaly_ids)
+            logger.info(f"{Fore.WHITE}Anomaly Request IDs for training data: {Fore.YELLOW}{training_anomaly_ids_sorted}{Style.RESET_ALL}")
 
-        # Output known abuse Request IDs for detection data
-        detection_abuse_ids_sorted = sorted(detection_abuse_ids)
-        logger.info(f"{Fore.WHITE}Known abuse Request IDs for detection data: {Fore.CYAN}{detection_abuse_ids_sorted}{Style.RESET_ALL}")
+            # Output known abuse Request IDs for detection data
+            detection_abuse_ids_sorted = sorted(detection_abuse_ids)
+            logger.info(f"{Fore.WHITE}Known abuse Request IDs for detection data: {Fore.CYAN}{detection_abuse_ids_sorted}{Style.RESET_ALL}")
 
-        # Output anomaly Request IDs for detection data
-        detection_anomaly_ids_sorted = sorted(detection_anomaly_ids)
-        logger.info(f"{Fore.WHITE}Anomaly Request IDs for detection data: {Fore.YELLOW}{detection_anomaly_ids_sorted}{Style.RESET_ALL}")
+            # Output anomaly Request IDs for detection data
+            detection_anomaly_ids_sorted = sorted(detection_anomaly_ids)
+            logger.info(f"{Fore.WHITE}Anomaly Request IDs for detection data: {Fore.YELLOW}{detection_anomaly_ids_sorted}{Style.RESET_ALL}")
 
-        # Output privileged keywords used
-        logger.info(f"{Fore.WHITE}Privileged keywords used: {Fore.LIGHTBLACK_EX}{privileged_keywords}{Style.RESET_ALL}")
+            # Output privileged keywords used
+            logger.info(f"{Fore.WHITE}Privileged keywords used: {Fore.LIGHTBLACK_EX}{privileged_keywords}{Style.RESET_ALL}")
 
-        # Output vulnerable templates used
-        logger.info(f"{Fore.WHITE}Vulnerable templates used: {Fore.LIGHTBLACK_EX}{vulnerable_templates}{Style.RESET_ALL}")
+            # Output vulnerable templates used
+            logger.info(f"{Fore.WHITE}Vulnerable templates used: {Fore.LIGHTBLACK_EX}{vulnerable_templates}{Style.RESET_ALL}")
 
-        # === Save Data ===
+            # === Save Data ===
 
-        training_data.to_csv("synthetic_ca_logs_training.csv", index=False)
-        logger.info(f"{Fore.GREEN}\nTraining data saved to {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_training.csv'{Style.RESET_ALL}")
+            training_data.to_csv("synthetic_ca_logs_training.csv", index=False)
+            logger.info(f"{Fore.GREEN}\nTraining data saved to {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_training.csv'{Style.RESET_ALL}")
 
-        detection_data.to_csv("synthetic_ca_logs_detection.csv", index=False)
-        logger.info(f"{Fore.GREEN}Detection data saved to: {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_detection.csv'{Style.RESET_ALL}")
+            detection_data.to_csv("synthetic_ca_logs_detection.csv", index=False)
+            logger.info(f"{Fore.GREEN}Detection data saved to: {Fore.LIGHTBLACK_EX}'synthetic_ca_logs_detection.csv'{Style.RESET_ALL}")
 
-        # === Update Config ===
-        if args.update_config:
-            update_config(training_abuse_ids_sorted, privileged_keywords, vulnerable_templates)
-            logger.info(f"{Fore.GREEN}Config file updated with generated data.{Style.RESET_ALL}")
+            # === Update Config ===
+            if args.update_config:
+                update_config(training_abuse_ids_sorted, privileged_keywords, vulnerable_templates)
+                logger.info(f"{Fore.GREEN}Config file updated with generated data.{Style.RESET_ALL}")
 
-    except KeyboardInterrupt:
-        print(f"{Fore.RED}\nOperation cancelled by user. Returning to console.{Style.RESET_ALL}")
-        return
+        except KeyboardInterrupt:
+            print(f"{Fore.RED}\nOperation cancelled by user. Returning to console.{Style.RESET_ALL}")
+            return
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}", exc_info=args.verbose)
         if args.verbose:
