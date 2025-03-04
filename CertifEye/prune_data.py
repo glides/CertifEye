@@ -4,7 +4,7 @@
 """
 CertifEye - Data Pruning Script
 Author: glides
-Version: 0.9.2
+Version: 0.9.3
 
 This script prunes a large CA logs dataset to create a manageable subset for model training.
 """
@@ -18,13 +18,16 @@ from colorama import init, Fore, Style
 from tqdm import tqdm
 from certifeye_utils import get_logger, load_config
 
+# load config
+config = load_config()
+
 # Initialize colorama
 init(autoreset=True)
 
 def get_parser():
     parser = argparse.ArgumentParser(description='CertifEye - Data Pruning Script')
+    parser.add_argument('-s', '--sample-size', type=int, default=config.get('pruning', {}).get('default_sample_size', 3000),help='Sample size of normal requests')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Increase verbosity level (e.g., -v, -vv)')
-    parser.add_argument('-s', '--sample-size', type=int, default=3000, help='Sample size of normal requests')
     return parser
 
 def main(args=None):
@@ -58,10 +61,6 @@ def main(args=None):
     try:
         # Only print banner if this script is run directly
         # print_banner()  # Commented out to display banner only once in the console app
-
-        # === Load Configuration ===
-
-        config = load_config()
 
         # Paths from config
         ca_logs_full_path = config['paths']['ca_logs_full_path']

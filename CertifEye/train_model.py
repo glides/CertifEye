@@ -4,7 +4,7 @@
 """
 CertifEye - Model Training Script
 Author: glides
-Version: 0.9.2
+Version: 0.9.3
 
 This script trains a machine learning model to detect potential abuses
 of Active Directory Certificate Services, including both known abuses
@@ -166,7 +166,7 @@ def main(args=None):
         authorized_client_auth_users = [user.lower() for user in authorized_client_auth_users]
 
         # Custom Thresholds
-        validity_threshold = config.get('validity_threshold', 730)  # Default to 730 days if not set
+        validity_threshold = config.get('detection', {}).get('default_validity_threshold', 730)
 
         # Off-hours Definition
         off_hours_start = config.get('off_hours_start', 19)  # Default to 7 PM
@@ -507,6 +507,7 @@ def main(args=None):
         with open(params_output_path, 'wb') as f:
             pickle.dump({
                 'feature_cols': feature_cols,
+                'feature_order': list(X.columns),
                 'pattern': pattern,
                 'vulnerable_templates': vulnerable_templates,
                 'validity_threshold': validity_threshold,

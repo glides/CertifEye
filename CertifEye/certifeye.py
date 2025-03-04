@@ -4,7 +4,7 @@
 """
 CertifEye - AD CS Abuse Detection Console Application
 Author: glides <glid3s@protonmail.com>
-Version: 0.9.2
+Version: 0.9.3
 
 This script provides a console application for detecting potential abuses of Active Directory Certificate Services.
 """
@@ -12,6 +12,7 @@ This script provides a console application for detecting potential abuses of Act
 import sys
 import argparse
 from prompt_toolkit import PromptSession
+from prompt_toolkit.shortcuts import CompleteStyle
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.styles import Style
 from prompt_toolkit.lexers import Lexer
@@ -25,16 +26,43 @@ import train_model
 # Import utility functions
 from certifeye_utils import print_banner, get_logger, load_config
 
+# Import command modules
+from train_model import get_parser as train_model_get_parser, main as train_model_main
+from generate_synthetic_data import get_parser as gen_data_get_parser, main as gen_data_main
+from detect_abuse import get_parser as detect_abuse_get_parser, main as detect_abuse_main
+from prune_data import get_parser as prune_data_get_parser, main as prune_data_main
+
+
+
 # Initialize logger
 logger = get_logger('CertifEye')
 
 # List of available commands and their arguments
 COMMANDS = ['detect_abuse', 'generate_synthetic_data', 'prune_data', 'train_model', 'exit', 'help']
 COMMAND_ARGUMENTS = {
-    'detect_abuse': ['-v', '--verbose', '-r', '--redact', '-f', '--show-features', '-i', '--request-id'],
-    'generate_synthetic_data': ['-tr', '--train_records', '-ta', '--train_abuses', '-dr', '--detect_records', '-da', '--detect_abuses', '-u', '--update-config', '-v', '--verbose'],
-    'prune_data': ['-v', '--verbose', '-s', '--sample-size'],
-    'train_model': ['-v', '--verbose'],
+    'detect_abuse': [
+        ('-v', 'Enable verbose output'),
+        ('-r', 'Redact sensitive information from output'),
+        ('-f', 'Show features used for detection'),
+        ('-i', 'Request ID(s) to analyze as comma-separated list'),
+    ],
+    'generate_synthetic_data': [
+        ('-tr', 'Number of training records'),
+        ('-ta', 'Number of training abuse cases'),
+        ('-at', 'Anomalies in training data'),
+        ('-dr', 'Number of detection records'),
+        ('-da', 'Number of detection abuse cases'),
+        ('-ad', 'Anomalies in detection data'),
+        ('-v', 'Enable verbose output'),
+        ('-u', 'Update config with generated data')
+    ],
+    'prune_data': [
+        ('-s', 'Sample size of normal requests'),
+        ('-v', 'Enable verbose output')
+    ],
+    'train_model': [
+        ('-v', 'Enable verbose output')
+    ],
 }
 
 # Define styles
@@ -50,6 +78,8 @@ style = Style.from_dict({
     # Autocomplete styles
     'completion-menu.completion': 'bg:#008888 #ffffff',
     'completion-menu.completion.current': 'bg:#00aaaa #000000',
+    'completion-menu.meta.completion': 'bg:#004444 #ffffff',
+    'completion-menu.meta.completion.current': 'bg:#006666 #ffffff', 
 })
 
 class CertifEyeCompleter(Completer):
@@ -76,7 +106,19 @@ class CertifEyeCompleter(Completer):
                     # Command typed with a space; suggest arguments
                     if command in COMMAND_ARGUMENTS:
                         for arg in COMMAND_ARGUMENTS[command]:
-                            yield Completion(arg, start_position=0)
+                            # Handle both tuple and string arguments
+                            if isinstance(arg, tuple):
+                                arg_name = arg[0]  # Extract just the argument name
+                                display_meta = arg[1]  # Keep help text
+                            else:
+                                arg_name = arg
+                                display_meta = None
+                            
+                            yield Completion(
+                                arg_name, 
+                                start_position=0,
+                                display_meta=display_meta
+                            )
                 else:
                     # Still typing the command
                     word = word_before_cursor
@@ -89,15 +131,21 @@ class CertifEyeCompleter(Completer):
                     # Get the last argument being typed
                     last_arg = word_before_cursor
                     start_position = -len(last_arg)
+                    
                     for arg in COMMAND_ARGUMENTS[command]:
-                        if arg.startswith(last_arg):
-                            yield Completion(arg, start_position=start_position)
-                else:
-                    # Command not recognized; suggest commands
-                    word = word_before_cursor
-                    for cmd in COMMANDS:
-                        if cmd.startswith(word):
-                            yield Completion(cmd, start_position=-len(word))
+                        # Handle both tuple and string args
+                        if isinstance(arg, tuple):
+                            arg_name = arg[0]
+                        else:
+                            arg_name = arg
+                        
+                        if arg_name.startswith(last_arg):
+                            display_meta = arg[1] if isinstance(arg, tuple) else None
+                            yield Completion(
+                                arg_name, 
+                                start_position=start_position,
+                                display_meta=display_meta
+                            )
 
 class CommandLexer(Lexer):
     def lex_document(self, document):
@@ -146,8 +194,13 @@ def main():
     Main function to run the CertifEye console application.
     """
     print_banner()
-    session = PromptSession(completer=CertifEyeCompleter(), style=style, lexer=CommandLexer())
-
+    session = PromptSession(
+        completer=CertifEyeCompleter(),
+        style=style,
+        lexer=CommandLexer(),
+        complete_style=CompleteStyle.MULTI_COLUMN
+    )
+    
     while True:
         try:
             # Build the prompt message with the colors

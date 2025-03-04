@@ -4,7 +4,7 @@
 """
 CertifEye - AD CS Abuse Detection Module
 Author: glides
-Version: 0.9.2
+Version: 0.9.3
 
 This script detects potential abuses of Active Directory Certificate Services,
 including both known abuses and anomalies.
@@ -31,6 +31,7 @@ from certifeye_utils import (
     load_config,
     get_logger,
     engineer_features,
+    send_alert_email
 )
 
 # Initialize colorama
@@ -88,10 +89,10 @@ def main(args=None):
         params_output_path = config['paths']['params_output_path']
 
         # Custom Classification Threshold
-        classification_threshold = config.get('classification_threshold', 0.5)  # Default to 0.5 if not set
+        classification_threshold = config.get('detection', {}).get('classification_threshold', 0.5)
 
         # Load Trained Model and Parameters
-        logger.info(f"Loading trained model from: {model_output_path}")
+        logger.info(f"\nLoading trained model from: {model_output_path}")
         clf = joblib.load(model_output_path)
 
         logger.info(f"Loading parameters from: {params_output_path}")
@@ -100,6 +101,7 @@ def main(args=None):
 
         # Extract parameters
         feature_cols = params['feature_cols']
+        feature_order = params['feature_order']
         validity_threshold = params['validity_threshold']
         training_mode = params.get('training_mode', 'supervised')
         pattern = params['pattern']
@@ -153,7 +155,7 @@ def main(args=None):
             detection_df = specific_requests
 
         total_requests = len(detection_df)
-        logger.info(f"Processing {total_requests} new certificate requests.")
+        logger.info(f"Processing {total_requests} new certificate requests.\n")
 
         potential_abuses = 0  # Counter for detected abuses
 
@@ -197,18 +199,21 @@ def main(args=None):
                 # Convert row to DataFrame for consistent processing
                 new_request_df = pd.DataFrame([new_request])
 
-                # Engineer features using the shared function
                 feature_values_df = engineer_features(
                     new_request_df,
-                    feature_cols,
-                    validity_threshold,
-                    pattern,
-                    vulnerable_templates,
-                    templates_requiring_approval,
-                    authorized_client_auth_users,
-                    training_mode,
-                    detection_mode=True  # Indicates we're in detection mode
+                    feature_cols=params['feature_cols'],
+                    validity_threshold=config['detection']['validity_threshold'],
+                    pattern=params['pattern'],
+                    vulnerable_templates=params['vulnerable_templates'],
+                    templates_requiring_approval=params.get('templates_requiring_approval', []),
+                    authorized_client_auth_users=params.get('authorized_client_auth_users', []),
+                    training_mode=params['training_mode'],
+                    detection_mode=True,
+                    expected_features=params['feature_order'] 
                 )
+
+                # Ensure column order matches training:
+                feature_values_df = feature_values_df.reindex(columns=feature_order, fill_value=0)
 
                 # Save the original Request ID
                 request_id = new_request_df['RequestID'].iloc[0]
@@ -241,39 +246,43 @@ def main(args=None):
                     is_abuse = True
                     probability = 1.0
                     explanations.append("Use of vulnerable template combined with privileged keywords detected (Rule-based detection).")
-                    logger.info("Rule-based override: High-risk combination detected.")
+                    logger.info(f"{Fore.CYAN}Rule-based override: {Fore.YELLOW}High-risk combination detected.{Style.RESET_ALL}")
 
-                # Logic to exclude or include certain requests based on business rules
-                requester_name = new_request['RequesterName'].lower()
-                issued_cn = str(new_request['CertificateIssuedCommonName']).lower()
-                certificate_subject = str(new_request['CertificateSubject']).lower()
-                certificate_sans = str(new_request['CertificateSANs']).lower()
-
-                if requester_name == issued_cn and not pattern.search(issued_cn):
-                    is_abuse = False  # Likely a normal self-enrollment
-                    explanations.append("Requester name matches issued CN without privileged keywords; likely benign.")
-
+                # Log potential abuse
                 if is_abuse:
                     potential_abuses += 1
 
                     message = (
-                        f"Potential abuse detected for Request ID {request_id} "
-                        f"with probability {probability:.2f}"
+                        f"{Fore.RED}Potential abuse detected for Request ID {Fore.YELLOW}{request_id} "
+                        f"{Fore.RED}with probability {Fore.YELLOW}{probability:.2f}{Style.RESET_ALL}"
                     )
                     logger.warning(message)
 
                     # Sanitize the request data before logging
                     sanitized_request_dict = sanitize_request_data(new_request.to_dict())
 
+                    # Send alert email
+                    if config.get('email', {}).get('enabled', True):
+                        email_body = f"""Potential certificate abuse detected:
+                        - Request ID: {request_id}
+                        - Requester: {sanitized_request_dict['RequesterName']}
+                        - Template: {sanitized_request_dict['CertificateTemplate']}
+                        - Probability: {probability:.2f}
+                        - Details: {sanitized_request_dict}
+                        """
+                        send_alert_email("Abuse Detected", email_body, config)
+
                     # Display detailed information
                     display_dict = sanitized_request_dict if args.redact else new_request.to_dict()
-                    logger.info(f"Requester Name: {display_dict['RequesterName']}")
-                    logger.info(f"Certificate Subject: {display_dict['CertificateSubject']}")
-                    logger.info(f"Certificate SANs: {display_dict['CertificateSANs']}")
-                    logger.info(f"Issued Common Name: {display_dict['CertificateIssuedCommonName']}")
-                    logger.info(f"Certificate Template: {display_dict['CertificateTemplate']}")
-                    logger.info(f"Enhanced Key Usage: {display_dict['EnhancedKeyUsage']}")
-                    logger.info(f"Request Date: {display_dict['RequestSubmissionTime']}")
+                    logger.info(f"{Fore.WHITE}\nRequester Name: {Fore.LIGHTBLACK_EX}{display_dict['RequesterName']}{Style.RESET_ALL}")
+                    logger.info(f"{Fore.WHITE}Certificate Subject: {Fore.LIGHTBLACK_EX}{display_dict['CertificateSubject']}{Style.RESET_ALL}")
+                    logger.info(f"{Fore.WHITE}Certificate SANs: {Fore.LIGHTBLACK_EX}{display_dict['CertificateSANs']}")
+                    logger.info(f"{Fore.WHITE}Issued Common Name: {Fore.LIGHTBLACK_EX}{display_dict['CertificateIssuedCommonName']}{Style.RESET_ALL}")
+                    logger.info(f"{Fore.WHITE}Certificate Template: {Fore.LIGHTBLACK_EX}{display_dict['CertificateTemplate']}{Style.RESET_ALL}")
+                    logger.info(f"{Fore.WHITE}Enhanced Key Usage: {Fore.LIGHTBLACK_EX}{display_dict['EnhancedKeyUsage']}{Style.RESET_ALL}")
+                    logger.info(f"{Fore.WHITE}Request Date: {Fore.LIGHTBLACK_EX}{display_dict['RequestSubmissionTime']}{Style.RESET_ALL}")
+                    logger.info(f"{Fore.WHITE}Valid From: {Fore.LIGHTBLACK_EX}{display_dict['CertificateValidityStart']}{Style.RESET_ALL}")
+                    logger.info(f"{Fore.WHITE}Valid To: {Fore.LIGHTBLACK_EX}{display_dict['CertificateValidityEnd']}{Style.RESET_ALL}")
 
                     # Generate human-readable explanation if requested
                     if args.show_features or args.verbose:
@@ -283,7 +292,7 @@ def main(args=None):
                         base_value = explainer.expected_value[0] if isinstance(explainer.expected_value, list) else explainer.expected_value
 
                         # Feature contributions (in log-odds)
-                        logger.info(f"Feature contributions for Request ID {request_id}:")
+                        logger.info(f"{Fore.MAGENTA}\nFeature contributions:")
 
                         for feature_name, shap_value in zip(feature_values_df.columns, shap_values_sample[0]):
                             feature_value = feature_values_df[feature_name].iloc[0]
@@ -303,19 +312,19 @@ def main(args=None):
 
                             # Log feature contributions
                             logger.info(
-                                f"  {feature_name}: Value={feature_value}, Contribution={shap_value:.5f}"
+                                f"{Fore.YELLOW}  {feature_name}: {Fore.WHITE}Value={Fore.LIGHTBLACK_EX}{feature_value}, {Fore.WHITE}Contribution={Fore.LIGHTBLACK_EX}{shap_value:.5f}"
                             )
 
                         # Total probability contribution
                         predicted_log_odds = base_value + shap_values_sample[0].sum()
                         predicted_prob = scipy.special.expit(predicted_log_odds)
 
-                        logger.info(f"Predicted Probability: {predicted_prob:.5f}")
+                        logger.info(f"{Fore.WHITE}\nPredicted Probability: {predicted_prob:.5f}")
 
                     # Combine explanations
                     if explanations:
-                        explanation_text = "The request was flagged because:\n- " + "\n- ".join(explanations)
-                        logger.info(f"{Fore.YELLOW}Explanation: {explanation_text}{Style.RESET_ALL}")
+                        explanation_text = "The request was flagged because...\n- " + "\n- ".join(explanations)
+                        logger.info(f"{Fore.YELLOW}\nExplanation: {Fore.WHITE}{explanation_text}\n{Style.RESET_ALL}")
 
                 # Update progress bar postfix
                 if use_progress_bar:

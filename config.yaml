@@ -10,46 +10,26 @@ paths:
 
 # Known Request IDs
 known_abuse_request_ids:
-- 10594
-- 11256
-- 11279
-- 11297
-- 11580
-- 12460
-- 12619
-- 12693
-- 12968
-- 13033
-- 13188
-- 13340
-- 13558
-- 13986
-- 14081
-- 14254
-- 14396
-- 14608
-- 14958
-- 14980
-- 15322
-- 15868
-- 15956
-- 16104
-- 16880
-- 16992
-- 17131
-- 17213
-- 17300
-- 17639
-- 17640
-- 17854
-- 17875
-- 18275
-- 18720
-- 18734
-- 18741
-- 19018
-- 19328
-- 19613
+- 10938
+- 11265
+- 12478
+- 14533
+- 16052
+- 16700
+- 17125
+- 17580
+- 18953
+- 18998
+- 19804
+- 20680
+- 21404
+- 22944
+- 23187
+- 23284
+- 24213
+- 25746
+- 26817
+- 27193
 known_good_request_ids: []
 privileged_keywords:
 - Admin
@@ -66,6 +46,57 @@ vulnerable_templates:
 - DomainControllerCertificate
 - CodeSigningCertificate
 - ESC1
+detection:
+  classification_threshold: 0.5  # Unified detection threshold
+  validity_threshold: 730         # Single validity threshold definition
+
+synthetic:
+  defaults:
+    train_records: 1000
+    train_abuses: 5
+    train_anomalies: 10
+    detect_records: 5000
+    detect_abuses: 5 
+    detect_anomalies: 10
+  normal_validity_days:
+    mean: 730    # 2 years
+    std_dev: 0  # ~1 month variation
+  business_hours:
+    start: 8     # 8 AM
+    end: 18      # 6 PM
+    days: [0, 1, 2, 3, 4] # Mon-Fri (Monday=0)
+  domain_name: "contoso.com"
+  internal_domain: "intra.contoso.local"
+  departments:
+  - Sales
+  - Marketing
+  - Engineering
+  - HR
+  - Finance
+  - IT
+  - Legal
+  - Operations
+  certificate_templates:
+    UserCertificate: ["Client Authentication", "Secure Email"]
+    MachineCertificate: ["Client Authentication", "Server Authentication"]
+    AdminCertificate: ["Client Authentication", "Any Purpose"]
+    ServerCertificate: ["Server Authentication"]
+    EncryptionCertificate: ["Secure Email"]
+    VPNCertificate: ["Client Authentication"]
+    EmailCertificate: ["Secure Email"]
+    SMIMECertificate: ["Secure Email"]
+    CodeSigningCertificate: ["Code Signing"]
+    DomainControllerCertificate: ["Client Authentication", "Server Authentication"]
+    UnknownTemplate: ["UnknownUsage"]
+  abuse_ekus:
+  - Client Authentication
+  - Smart Card Logon
+  - PKINIT Client Authentication
+  - Any Purpose
+  - SubCA
+  - Code Signing
+  - UnknownUsage
+
 templates_requiring_approval:
 authorized_client_auth_users:
 - elizabeth.johnson
@@ -103,7 +134,9 @@ classification_threshold: 0.631
 off_hours_start: 22
 off_hours_end: 6
 max_historical_days: 90
-validity_zscore_threshold: 2.5
+validity_zscore_threshold: 2.5  # Sensitivity (default=2.5 = ~99th percentile)
+# Additional checks
+enable_zscore_checks: true  # Master switch
 enable_esc_checks: true
 enable_suspicious_eku_checks: true
 enable_privilege_escalation_checks: true
@@ -119,11 +152,12 @@ synthetic_data:
 
 # SMTP Configuration for Alerts
 smtp:
-  server: 'smtp.yourdomain.com'
+  enabled: false  # Must be explicitly set
+  server: 'smtp.office365.com'
   port: 587
-  username: 'alert@yourdomain.com'
-  password: 'your_password'                 # Secure this appropriately
-  sender_email: 'alert@yourdomain.com'
+  username: 'security-alerts@contoso.com'
+  password: '${SMTP_PASSWORD}'  # Use env variable in real deployment
+  sender_email: 'certifeye-alerts@contoso.com'
 
 # Algorithm and Training Mode
 algorithm: 'xgboost'
@@ -131,3 +165,7 @@ training_mode: 'supervised'
 valid_templates:
 - UserCertificate
 - MachineCertificate
+
+pruning:
+  default_sample_size: 3000
+

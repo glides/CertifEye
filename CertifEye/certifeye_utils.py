@@ -4,7 +4,7 @@
 """
 CertifEye - Utility Functions
 Author: glides
-Version: 0.9.2
+Version: 0.9.3
 
 This module contains helper functions used across CertifEye scripts.
 """
@@ -23,6 +23,7 @@ from datetime import datetime
 import os
 import hashlib
 import math
+from textwrap import wrap
 
 # Initialize colorama
 init(autoreset=True)
@@ -63,6 +64,30 @@ def get_logger(name):
 
     return logger
 
+# === Request ID Formatting Function ===
+
+def format_request_ids(request_ids, line_prefix="", color=Fore.LIGHTBLACK_EX, chunk_size=20):
+    """Format long lists of Request IDs into wrapped lines."""
+    id_strings = [str(rid) for rid in sorted(request_ids)]
+    chunks = [id_strings[i:i + chunk_size] for i in range(0, len(id_strings), chunk_size)]
+    
+    formatted = []
+    for chunk in chunks:
+        line = f"{color}{', '.join(chunk)}{Style.RESET_ALL}"
+        formatted.append(f"{line_prefix}{line}")
+    
+    return '\n'.join(formatted)
+
+# === Progress Bar Format Function ===
+
+def get_progress_bar_format(desc_width=25):
+    """Return consistent progress bar format with aligned elements"""
+    return (
+        f"{Fore.YELLOW}{{desc:{desc_width}}}{Style.RESET_ALL} "
+        f"{Fore.GREEN}{{bar:40}}{Style.RESET_ALL} "
+        f"{Fore.LIGHTBLACK_EX}| {Style.BRIGHT}{{n:04d}}/{{total:04d}} "
+    )
+
 # === ASCII Banner Function ===
 
 def print_banner():
@@ -80,7 +105,7 @@ def print_banner():
     """
     tagline = f"{Fore.CYAN}Certif{Fore.YELLOW}Eye{Style.RESET_ALL} -{Fore.LIGHTBLACK_EX} An AD CS Abuse Detection Tool\n{Style.RESET_ALL}"
     author = f"{Fore.WHITE}Author: {Fore.LIGHTBLACK_EX}glides <glid3s@protonmail.com>{Style.RESET_ALL}"
-    version = f"{Fore.WHITE}Version: {Fore.LIGHTBLACK_EX}0.9.2\n{Style.RESET_ALL}"
+    version = f"{Fore.WHITE}Version: {Fore.LIGHTBLACK_EX}0.9.3\n{Style.RESET_ALL}"
 
     print(ascii_banner)
     print(tagline)
@@ -194,6 +219,47 @@ def is_authorized_for_client_auth(requester_name, authorized_users):
     else:
         return False
 
+def is_smtp_enabled(config):
+    """Check if SMTP alerts are properly configured."""
+    smtp_config = config.get('smtp', {})
+    if not smtp_config.get('enabled', False):
+        return False
+    
+    required_fields = ['server', 'port', 'username', 'password', 'sender_email']
+    missing = [field for field in required_fields if not smtp_config.get(field)]
+    
+    if missing:
+        logger = get_logger('CertifEye-SMTP')
+        logger.warning(f"SMTP enabled but missing fields: {missing}")
+        return False
+    
+    return True
+
+def send_alert_email(subject, body, config):
+    """Send detection alerts via SMTP using config credentials."""
+    if not is_smtp_enabled(config):
+        return False
+
+    try:
+        smtp_config = config['smtp']
+        msg = MIMEText(body)
+        msg['Subject'] = f"[CertifEye Alert] {subject}"
+        msg['From'] = smtp_config['sender_email']
+        msg['To'] = smtp_config['username']  # Or use configurable recipients
+
+        with smtplib.SMTP(smtp_config['server'], smtp_config['port']) as server:
+            server.starttls()
+            server.login(smtp_config['username'], smtp_config['password'])
+            server.send_message(msg)
+        
+        logger = get_logger('CertifEye-Alerts')
+        logger.info(f"{Fore.GREEN}Alert email sent successfully{Style.RESET_ALL}")
+        return True
+    except Exception as e:
+        logger = get_logger('CertifEye-Alerts')
+        logger.error(f"{Fore.RED}Failed to send alert email: {str(e)}{Style.RESET_ALL}", exc_info=True)
+        return False
+
 def sanitize_request_data(request_data):
     """
     Sanitizes request data by removing sensitive fields.
@@ -294,7 +360,8 @@ def engineer_features(
     templates_requiring_approval,
     authorized_client_auth_users,
     training_mode,
-    detection_mode=False
+    detection_mode=False,
+    expected_features=None
 ):
     """
     Engineer features from the given DataFrame.
@@ -317,9 +384,6 @@ def engineer_features(
 
     # Initialize feature values
     df_features = pd.DataFrame()
-
-    # GoldenCert EKU Features
-    df['has_any_purpose_eku'] = df['EnhancedKeyUsage'].str.contains('Any Purpose', case=False, na=False).astype(int)
 
     # Privileged Account Detection
     privileged_pattern = '|'.join(config['privileged_keywords'])
@@ -367,6 +431,20 @@ def engineer_features(
     df_features['Unusual_Validity_Period'] = df['CertificateValidityDuration'].apply(
         lambda x: 1 if x > validity_threshold else 0
     )
+
+    # Z-Score Validity Check 
+    if config.get('enable_zscore_checks', False):
+        logger.debug("Calculating validity duration Z-scores")
+        df['CertificateValidityDuration'] = (df['CertificateValidityEnd'] - df['CertificateValidityStart']).dt.days
+        
+        # Handle zero-division/constant values
+        if df['CertificateValidityDuration'].nunique() > 1:
+            z_scores = (df['CertificateValidityDuration'] - df['CertificateValidityDuration'].mean()) / df['CertificateValidityDuration'].std()
+            df_features['Validity_ZScore_Anomaly'] = (z_scores > config.get('validity_zscore_threshold', 2.5)).astype(int)
+        else:
+            df_features['Validity_ZScore_Anomaly'] = 0
+        
+        feature_cols.append('Validity_ZScore_Anomaly')
 
     # Disposition Status Encoding
     df_features['Disposition_Issued'] = df['RequestDisposition'].apply(
@@ -423,4 +501,57 @@ def engineer_features(
     # Reorder columns to match the feature_cols
     df_features = df_features[feature_cols]
 
+    # Add z-score feature if enabled
+    if config.get('enable_zscore_checks', False):
+        # Calculate validity duration in days
+        df['CertificateValidityDuration'] = (
+            df['CertificateValidityEnd'] - df['CertificateValidityStart']
+        ).dt.days
+        
+        # Initialize default values
+        zscore_flags = pd.Series(0, index=df.index)
+        
+        # Only calculate if we have variation
+        if df['CertificateValidityDuration'].nunique() > 1:
+            mean_duration = df['CertificateValidityDuration'].mean()
+            std_duration = df['CertificateValidityDuration'].std()
+            
+            # Avoid division by zero
+            if std_duration > 0:
+                z_scores = (df['CertificateValidityDuration'] - mean_duration) / std_duration
+                zscore_flags = (z_scores > config.get('validity_zscore_threshold', 2.5)).astype(int)
+        
+        df_features['Validity_ZScore_Anomaly'] = zscore_flags
+        
+        if 'Validity_ZScore_Anomaly' not in feature_cols:
+            feature_cols.append('Validity_ZScore_Anomaly')
+            logger.debug(f"{Fore.CYAN}Added Z-Score anomaly feature{Style.RESET_ALL}")
+        
+        logger.debug(
+            f"{Fore.CYAN}Z-Score anomalies detected: " 
+            f"{zscore_flags.sum()}{Style.RESET_ALL}"
+        )
+    
+    df_features['Validity_ZScore_Anomaly'] = zscore_flags
+    
+    # Enforce expected feature set during detection
+    if not training_mode and expected_features:
+        missing = set(expected_features) - set(df_features.columns)
+        extra = set(df_features.columns) - set(expected_features)
+        
+        if missing:
+            logger.warning(f"Adding missing features: {missing}")
+            for col in missing:
+                df_features[col] = 0
+                
+        if extra:
+            logger.warning(f"Removing extra features: {extra}")
+            df_features = df_features.drop(columns=list(extra))
+    
+    # Ensure unique columns before reindexing
+    df_features = df_features.loc[:, ~df_features.columns.duplicated()]
+    if expected_features:
+        expected_features = list(dict.fromkeys(expected_features))  # Remove duplicates
+        df_features = df_features.reindex(columns=expected_features, fill_value=0)
+    
     return df_features
