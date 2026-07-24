@@ -98,11 +98,16 @@ if not path_cards:
 
 top = findings[:6]
 todo = []
-for f in top:
-    if f.get("RecommendedValidation"):
-        todo.append(f'Validate {f.get("FindingID")} ({f.get("ESCType")}): {f.get("RecommendedValidation")}')
-    if f.get("RecommendedRemediation") and f.get("Severity") in {"Critical", "High"}:
-        todo.append(f'Remediate {f.get("FindingID")}: {f.get("RecommendedRemediation")}')
+top_by_esc = {}
+for finding in top:
+    top_by_esc.setdefault(finding.get("ESCType", "Other"), []).append(finding)
+for esc_type, grouped in top_by_esc.items():
+    refs = ", ".join(f.get("FindingID", "") for f in grouped)
+    validation = next((f.get("RecommendedValidation") for f in grouped if f.get("RecommendedValidation")), "Validate the current-run evidence with the PKI owner.")
+    todo.append(f'Validate {esc_type} findings ({len(grouped)}; {refs}): {validation}')
+    remediation = next((f.get("RecommendedRemediation") for f in grouped if f.get("Severity") in {"Critical", "High"} and f.get("RecommendedRemediation")), None)
+    if remediation:
+        todo.append(f'Remediate {esc_type} findings ({len(grouped)}; {refs}): {remediation}')
 if not todo:
     todo = ["Review the coverage matrix for any Not evaluated areas and collect missing exports if needed."]
 todo_html = "".join(f'<li>{e(t)}</li>' for t in todo[:10])

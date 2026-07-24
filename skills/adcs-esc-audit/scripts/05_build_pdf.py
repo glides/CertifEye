@@ -411,18 +411,25 @@ else:
 
 story.append(Paragraph("Prioritized recommendations", h3))
 recs = []
-for f in top_findings:
-    if f.get("RecommendedValidation"):
-        recs.append(("Validate", f, f.get("RecommendedValidation")))
-    if f.get("Severity") in {"Critical", "High"} and f.get("RecommendedRemediation"):
-        recs.append(("Remediate", f, f.get("RecommendedRemediation")))
+top_by_esc = defaultdict(list)
+for finding in top_findings:
+    top_by_esc[finding.get("ESCType", "Other")].append(finding)
+for esc_type, grouped in top_by_esc.items():
+    representative = grouped[0]
+    refs = ", ".join(f.get("FindingID", "") for f in grouped)
+    validation = next((f.get("RecommendedValidation") for f in grouped if f.get("RecommendedValidation")), None)
+    if validation:
+        recs.append(("Validate", f"{esc_type} findings ({len(grouped)}; {refs})", representative, validation))
+    remediation = next((f.get("RecommendedRemediation") for f in grouped if f.get("Severity") in {"Critical", "High"} and f.get("RecommendedRemediation")), None)
+    if remediation:
+        recs.append(("Remediate", f"{esc_type} findings ({len(grouped)}; {refs})", representative, remediation))
 if not recs:
     story.append(Paragraph("- <b>Collect missing evidence.</b> Collect any missing input files for areas marked Not evaluated, then rerun the audit.", body))
 else:
-    for action, finding, guidance in recs[:5]:
+    for action, label, finding, guidance in recs[:5]:
         action_color = "#2a9d8f" if action == "Validate" else SEV_HEX.get(finding.get("Severity"), "#b00020")
         story.append(Paragraph(
-            f"- <font color='{action_color}'><b>{action} {safe(finding.get('FindingID'))}.</b></font> {safe(guidance)}",
+            f"- <font color='{action_color}'><b>{action} {safe(label)}.</b></font> {safe(guidance)}",
             body,
         ))
 story.append(PageBreak())

@@ -334,7 +334,8 @@ function Start-AssessmentInteractive {
         [string[]]$Examples=@(),
         [hashtable]$Session=@{},
         [hashtable]$CompletionValues=@{},
-        [string]$Subtitle='Privacy-preserving defensive assessment'
+        [string]$Subtitle='Privacy-preserving defensive assessment',
+        [hashtable]$BannerInfo=@{}
     )
     $builtIns=@('help','options','set','plan','collect','analyze','validate','last','doctor','examples','clear','exit')
     $allowed=@($builtIns+@($Commands.Keys))|Sort-Object -Unique
@@ -413,8 +414,12 @@ function Start-AssessmentInteractive {
             if($absolute -lt $width){[Console]::SetCursorPosition($absolute,$originTop)}
         }
         & $writePrompt
+        $oldTreatControlC = [Console]::TreatControlCAsInput
+        [Console]::TreatControlCAsInput = $true
+        try {
         while($true){
             $key=[Console]::ReadKey($true)
+            if(($key.Modifiers -band [ConsoleModifiers]::Control) -and $key.Key -eq [ConsoleKey]::C){[Console]::WriteLine();return 'exit'}
             if($key.Key -eq [ConsoleKey]::Enter){[Console]::WriteLine();return $buffer}
             if($key.Key -eq [ConsoleKey]::LeftArrow -and $cursor -gt 0){$cursor--;$cycleActive=$false;$cycle=@();$cycleIndex=-1;& $redraw $buffer $cursor;continue}
             if($key.Key -eq [ConsoleKey]::RightArrow -and $cursor -lt $buffer.Length){$cursor++;$cycleActive=$false;$cycle=@();$cycleIndex=-1;& $redraw $buffer $cursor;continue}
@@ -435,14 +440,47 @@ function Start-AssessmentInteractive {
             }
             if($key.KeyChar -and -not[char]::IsControl($key.KeyChar)){$buffer=$buffer.Insert($cursor,[string]$key.KeyChar);$cursor++;$cycleActive=$false;$cycle=@();$cycleIndex=-1;& $redraw $buffer $cursor}
         }
+        }
+        finally { [Console]::TreatControlCAsInput = $oldTreatControlC }
     }
-    Write-Host '';Write-Host ('  >_ '+$ToolName) -ForegroundColor Cyan;Write-Host ('  '+$Subtitle) -ForegroundColor DarkGray
+    if($BannerInfo.Count){
+        function Write-AssessmentBannerRow([string]$Text, [ConsoleColor]$TextColor, [int]$Indent = 2) {
+            $innerWidth = $width - 2
+            $padding = [Math]::Max(0, $innerWidth - $Indent - $Text.Length)
+            Write-Host '║' -ForegroundColor DarkCyan -NoNewline
+            Write-Host (' ' * $Indent) -NoNewline
+            Write-Host $Text -ForegroundColor $TextColor -NoNewline
+            Write-Host (' ' * $padding) -NoNewline
+            Write-Host '║' -ForegroundColor DarkCyan
+        }
+        $width=70;$line=('═' * ($width-2))
+        Write-Host ''
+        Write-Host ('╔'+$line+'╗') -ForegroundColor DarkCyan
+        Write-AssessmentBannerRow -Text ('[>_] '+$ToolName) -TextColor Magenta -Indent 4
+        Write-AssessmentBannerRow -Text $Subtitle -TextColor DarkGray -Indent 4
+        Write-Host ('╠'+$line+'╣') -ForegroundColor DarkCyan
+        foreach($label in @('Version','Author','Repo')){
+            if($BannerInfo.ContainsKey($label)){
+                Write-AssessmentBannerRow -Text ('> {0,-10} {1}' -f $label,[string]$BannerInfo[$label]) -TextColor Cyan -Indent 2
+            }
+        }
+        Write-Host ('╚'+$line+'╝') -ForegroundColor DarkCyan
+        Write-Host ''
+    }
+    else { Write-Host '';Write-Host ('  >_ '+$ToolName) -ForegroundColor Cyan;Write-Host ('  '+$Subtitle) -ForegroundColor DarkGray }
     Write-Host '  Type help; Tab completes; Up/Down recall history; exit returns to PowerShell.' -ForegroundColor DarkGray
     :AssessmentConsoleLoop while($true){
         $line=(Read-AssessmentLine "($ToolName) > " $ToolName).Trim();if(-not $line){continue};$history.Add($line);$parts=@(Split-AssessmentCommandLine $line);$name=$parts[0].ToLowerInvariant();$args=@($parts|Select-Object -Skip 1)
         if($name -notin $allowed){Write-Warning "Unknown command '$name'. Type help.";continue};$Session['LastCommand']=$line
         switch($name){
-            'exit'{return $Session}
+            'exit'{
+                $answer = Read-Host "Exit $ToolName interactive console [Y/n]"
+                if([string]::IsNullOrWhiteSpace($answer) -or $answer.Trim() -match '^(?i)y(es)?$'){
+                    Write-Host 'Goodbye.' -ForegroundColor DarkGray
+                    return $Session
+                }
+                continue AssessmentConsoleLoop
+            }
             'clear'{Clear-Host;continue AssessmentConsoleLoop}
             'help'{
                 if($args.Count){

@@ -3980,7 +3980,7 @@ function Start-CertifEyeConsole {
         analyze = { param($args,$s) if(-not $s.WorkDir){throw 'Use set WorkDir <path> before analyze.'};$p=@{Action='Analyze';NonInteractive=$true;WorkDir=[string]$s.WorkDir;SkipQa=$SkipQa};if($s._NoTokenization){$p.NoTokenization=$true};foreach($name in 'InputDir','OutputDir','WorkingDir'){if($s[$name]){$p[$name]=[string]$s[$name]}};& $PSCommandPath @p -PassThru }
         validate = { param($args,$s) $root=[string]$s.WorkDir;if(-not $root){throw 'Use set WorkDir <path> before validate.'};$p=@{Action='Validate';WorkDir=$root;PassThru=$true};if($s._NoTokenization){$p.NoTokenization=$true};& $PSCommandPath @p | Format-List }
     }
-    Start-AssessmentInteractive -ToolName 'CertifEye' -Commands $commands -Session $session -Examples @('set WorkDir C:\Assessments\CertifEye','set SaltFile C:\Secure\assessment.salt','set Stage All','plan','collect','analyze','validate') -CompletionValues @{'set'=@('WorkDir','Stage','SaltFile','SaltFromEnv','InputDir','OutputDir','WorkingDir');'Stage'=@('Export','Trim','Templates','CASecurity','TokenMap','Scrub','Harden','Analyze','All')}
+    Start-AssessmentInteractive -ToolName 'CertifEye' -Subtitle 'Privacy-preserving AD CS assessment.' -BannerInfo @{Version='v2.1.0-rc1';Author='glides';Repo='github.com/glides/CertifEye'} -Commands $commands -Session $session -Examples @('set WorkDir C:\Assessments\CertifEye','set SaltFile C:\Secure\assessment.salt','set Stage All','plan','collect','analyze','validate') -CompletionValues @{'set'=@('WorkDir','Stage','SaltFile','SaltFromEnv','InputDir','OutputDir','WorkingDir');'Stage'=@('Export','Trim','Templates','CASecurity','TokenMap','Scrub','Harden','Analyze','All')}
 }
 
 # Make WorkDir available to all functions as a session value.

@@ -86,6 +86,14 @@ def has_write(rights: Any) -> bool:
     return any(tok.lower() in r.lower() for tok in WRITE_TOKENS)
 
 
+def is_read_or_execute_only_ace(row: Dict[str, Any]) -> bool:
+    """Prevent collector-side category labels from turning GenericRead into ESC5 control."""
+    values = " ".join([row_get(row, "Rights"), row_get(row, "ResolvedRight")]).lower()
+    if has_write(values):
+        return False
+    return any(token in values for token in ("genericread", "genericexecute", "readproperty", "readcontrol", "listchildren"))
+
+
 def row_get(row: Dict[str, Any], *keys: str, default: str = "") -> str:
     for k in keys:
         if k in row and row[k] is not None:
@@ -414,7 +422,8 @@ esc5_control = []
 for a in esc5_candidate_rows:
     if truthy(row_get(a, "IsEnrollRight")):
         continue
-    if has_write(row_get(a, "Rights", "ResolvedRight")) or row_get(a, "RightCategory") == "Control":
+    rights_text = " ".join([row_get(a, "Rights"), row_get(a, "ResolvedRight")])
+    if has_write(rights_text) or (row_get(a, "RightCategory") == "Control" and not is_read_or_execute_only_ace(a)):
         esc5_control.append(a)
 esc5_by_principal: Dict[str, List[Dict[str, str]]] = defaultdict(list)
 for a in esc5_control:
@@ -532,6 +541,17 @@ def history_text(rows: List[Dict[str, str]]) -> str:
     return f"first={first}, last={last}, revoked={revoked}/{len(rows)}"
 
 
+def ace_right_label(row: Dict[str, str]) -> str:
+    """Prefer a resolved right, but never display an orphaned 'Generic.' label."""
+    resolved = row_get(row, "ResolvedRight").strip()
+    raw = row_get(row, "Rights").strip()
+    if resolved and resolved.lower() not in {"generic", "unknown"}:
+        return resolved
+    if raw:
+        return raw
+    return "Generic rights" if resolved.lower() == "generic" else "Unknown right"
+
+
 # ESC5: PKI object control grouped by principal.
 for principal, rows in sorted(esc5_by_principal.items(), key=lambda kv: (-len(kv[1]), kv[0])):
     obj_types = sorted({row_get(a, "PkiObjectType", default="PKI object") for a in rows})
@@ -546,7 +566,7 @@ for principal, rows in sorted(esc5_by_principal.items(), key=lambda kv: (-len(kv
         Principal=principal,
         Object=";".join(obj_types),
         Occurrences=len(rows),
-        Evidence=f"{len(rows)} dangerous PKI-object ACE(s) for {principal}: object types {', '.join(obj_types)}; rights include {', '.join(sorted({row_get(a, 'ResolvedRight', 'Rights', default='Unknown') for a in rows})[:6])}. Enroll-only rights were not counted as ESC5 control.",
+        Evidence=f"{len(rows)} dangerous PKI-object ACE(s) for {principal}: object types {', '.join(obj_types)}; dangerous rights include {', '.join(sorted({ace_right_label(a) for a in rows})[:6])}. Enroll-only rights were not counted as ESC5 control.",
         WhyThisMatters="Write/control rights over PKI AD objects can let that principal alter certificate trust, publish or modify templates, or change enrollment-service objects. That is a PKI privilege-escalation path if the principal is not an intended PKI administrator.",
         RecommendedValidation="Confirm whether the principal is an approved PKI/tier-0 administrator and whether each listed ACE is intentional.",
         RecommendedRemediation="Remove GenericAll/GenericWrite/WriteDacl/WriteOwner/WriteProperty from non-PKI-admin principals on the listed PKI objects; retain only explicit, documented PKI admin groups.",
@@ -619,7 +639,7 @@ for (sev, status, template_name), items in sorted(issue_groups.items(), key=lamb
         Target="High-value SAN target" if hv_count else "SAN target differs from requester",
         Occurrences=len(rows),
         SampleRequestIDs=sample_ids(rows),
-        Evidence=f"{len(rows)} certificate issuance row(s) on template '{template_name}' have identity mismatch status {status}; {joined_count} joined to template inventory, {auth_count} are authentication-capable, and {hv_count} involve HV/high-value tokens; {history_text(rows)}. Sample RequestIDs: {sample_ids(rows) or 'not available'}.",
+        Evidence=f"{len(rows)} certificate issuance row(s) on template '{template_name}' have identity mismatch status {status}; {joined_count} joined to template inventory, {auth_count} are authentication-capable, and {hv_count} involve HV/high-value tokens; {history_text(rows)}. Request IDs: {sample_ids(rows) or 'not available'}.",
         WhyThisMatters="Requester/SAN identity mismatch on an authentication-capable certificate is the core signal for certificate-based impersonation. Issuance alone does not prove the certificate was used.",
         RecommendedValidation="Correlate the certificate serials/thumbprints or RequestIDs with DC/Kerberos certificate-authentication logs before claiming confirmed misuse.",
         RecommendedRemediation="If unexplained, revoke the certificates and tighten the issuing template's subject/SAN, approval, signature, and enrollment settings.",
@@ -648,7 +668,7 @@ if e6_strong:
         Object="Issued certificates with SAN request attributes",
         Occurrences=len(e6_strong),
         SampleRequestIDs=sample_ids(e6_strong),
-        Evidence=f"{len(e6_strong)} issued certificate row(s) include SAN request attributes on joined templates that do not allow requester-supplied Subject/SAN; {history_text(e6_strong)}. Sample RequestIDs: {sample_ids(e6_strong) or 'not available'}.",
+        Evidence=f"{len(e6_strong)} issued certificate row(s) include SAN request attributes on joined templates that do not allow requester-supplied Subject/SAN; {history_text(e6_strong)}. Request IDs: {sample_ids(e6_strong) or 'not available'}.",
         WhyThisMatters="This is an issuance-side indicator that the CA may have honored SAN values through request attributes rather than template settings.",
         RecommendedValidation="Confirm the CA's EDITF_ATTRIBUTESUBJECTALTNAME2 flag and inspect the specific request rows.",
         RecommendedRemediation="Disable the CA-wide SAN attribute behavior if not explicitly required and reissue affected certificates as needed.",
@@ -665,7 +685,7 @@ if esc2_rows:
         Object="Any Purpose / no-EKU issued certificates",
         Occurrences=len(esc2_rows),
         SampleRequestIDs=sample_ids(esc2_rows),
-        Evidence=f"{len(esc2_rows)} issued certificate row(s) have Any Purpose or no EKU evidence; high-value involvement: {sum(1 for c in esc2_rows if cert_high_value(c))}; {history_text(esc2_rows)}. Sample RequestIDs: {sample_ids(esc2_rows) or 'not available'}.",
+        Evidence=f"{len(esc2_rows)} issued certificate row(s) have Any Purpose or no EKU evidence; high-value involvement: {sum(1 for c in esc2_rows if cert_high_value(c))}; {history_text(esc2_rows)}. Request IDs: {sample_ids(esc2_rows) or 'not available'}.",
         WhyThisMatters="Any Purpose or no-EKU certificates may be usable for client authentication depending on chain and policy context.",
         RecommendedValidation="Confirm intended EKUs and whether the certificate chain allows client authentication.",
         RecommendedRemediation="Remove Any Purpose/no-EKU issuance unless explicitly required; issue workload-specific EKUs only.",
