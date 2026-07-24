@@ -1,139 +1,191 @@
-# CertifEye: Privacy-Preserving AI-Assisted Security Assessment
+# CertifEye: A Privacy-Preserving AI-Assisted AD CS Assessment
 
-## Presentation purpose
+## How to use this guide
 
-**Audience:** colleagues exploring practical, responsible AI adoption.
+This is a recovery script, not a script you must read word-for-word. Each slide has a natural passage, one short line to use if you lose your place, and a transition to the next slide. The deck is designed for a 12–15 minute talk followed by a short demonstration.
 
-**Core message:** AI does not replace security judgment. It makes a well-scoped, privacy-preserving security assessment easier to build, repeat, explain, and improve.
-
-**Recommended length:** 12–15 minutes, followed by a short live demonstration.
+Use synthetic data only. Do not show client exports, tokens, token maps, salts, private manifests, screenshots, or report output from a real environment.
 
 ---
 
-## Opening (about 60 seconds)
+## Slide 1 — CertifEye
+
+### Say this
+
+> “I wanted to share a practical use case for AI in security work. CertifEye is an Active Directory Certificate Services assessment tool. It collects the evidence we need to review AD CS safely, keeps sensitive details local, and produces an offline report even if AI is never used.”
 
 > “This is not an AI tool that connects to Active Directory and declares an environment secure. CertifEye is a security-engineered evidence pipeline. It collects the right AD CS evidence, keeps sensitive information local, produces deterministic findings, and—when appropriate—creates a structured scrubbed package that AI can help explain and prioritize. AI accelerates analysis; it does not replace security validation.”
 
-Start with the problem: an AD CS assessment can contain sensitive identities, certificate history, access-control information, and infrastructure context. Traditional tools can surface checks, but the handoff from technical evidence to a clear remediation plan is difficult—especially for teams without deep PKI experience.
+### If you lose your place
+
+> “The important point is that the security assessment comes first. AI is an optional layer on top of evidence we already collected and reviewed safely.”
+
+### Transition
+
+> “The reason that separation matters becomes clear when we look at the kind of data an AD CS assessment produces.”
 
 ---
 
-## The CertifEye workflow
+## Slide 2 — Why the assessment is difficult to hand off
 
-```text
-Approved AD CS environment
-          ↓
-Read-only PowerShell collector
-          ↓
-Raw and private evidence kept local
-          ↓
-Scrubbed, correlated evidence package
-          ↓
-Deterministic offline report ─────→ Optional AI-assisted review
-          ↓                                  ↓
-Operator validation                    Context, explanation,
-and remediation                         prioritization, questions
+### Say this
+
+> “Finding a risky certificate template or an overly broad permission is useful, but it is only the start. Someone still has to understand why it matters, determine who owns it, validate whether it is intentional, and decide how to remediate it without breaking a business process.”
+
+> “The evidence can also be sensitive. Certificate history, access-control details, identity information, and infrastructure context are not things we should casually place into a broadly shared review process.”
+
+> “Finally, not every administrator who needs to participate in remediation is a PKI specialist. The output needs to be detailed enough for a security engineer, but understandable enough that the right people can take action.”
+
+### If you lose your place
+
+> “The challenge is not just detection. It is turning sensitive technical evidence into something the right people can safely understand and act on.”
+
+### Transition
+
+> “CertifEye handles that by separating collection, private evidence, reporting, and optional AI review.”
+
+---
+
+## Slide 3 — How CertifEye handles assessment data
+
+### Say this
+
+> “The collector runs locally and read-only. It gathers AD CS evidence and stores the raw and private material locally. It then scrubs and correlates the information so the static analyzer can build a report, findings list, and attack-path graph.”
+
+> “That offline report is already useful on its own. If a client or engagement allows AI-assisted review, we can use the scrubbed package instead of supplying raw environment data. If it does not, the same assessment can remain entirely local.”
+
+> “The point is not to make every assessment use AI. The point is to have a safe option when AI can add value.”
+
+### If you lose your place
+
+> “Local collection and offline analysis are the default. AI review is optional and uses the scrubbed package.”
+
+### Transition
+
+> “That only works if we are clear about what stays on the local system.”
+
+---
+
+## Slide 4 — What stays local
+
+### Say this
+
+> “The sensitive pieces stay local: raw exports, salts, token maps, private manifests, and detailed evidence. Those are the parts that make it possible to map an assessment back to the real environment, so they are not included in the safe review package.”
+
+> “The optional review package contains scrubbed tokens and relationships, schema and coverage information, and the deterministic evidence needed to explain the report. It is useful for analysis while avoiding raw identities and private mappings.”
+
+> “The collector is also read-only. It does not change Active Directory, certificate templates, CAs, or the PKI environment.”
+
+### If you lose your place
+
+> “Raw data and the ability to reverse the tokens remain local. The review package is intentionally limited to scrubbed evidence.”
+
+### Transition
+
+> “With that boundary in place, the static report and AI review can each do the job they are best at.”
+
+---
+
+## Slide 5 — Deterministic analysis vs. AI assistance
+
+### Say this
+
+> “The deterministic offline report is the baseline. It runs the same rules against the same data, provides coverage states, produces a graph, and gives us a stable report we can test and compare over time.”
+
+> “AI is useful after that baseline exists. It can explain a finding in terms that fit the audience, point out related evidence, help organize remediation work, and suggest what should be validated next.”
+
+> “What it should not do is turn a single row or configuration signal into a claim that abuse happened. A finding is evidence to investigate. It still needs a qualified person to validate the surrounding context.”
+
+### If you lose your place
+
+> “The static report tells us what the evidence says. AI can help us work through what to look at next.”
+
+### Transition
+
+> “This same separation also shaped how I used AI while building the tool.”
+
+---
+
+## Slide 6 — How AI helped build CertifEye
+
+### Say this
+
+> “AI was helpful because I did not ask it to make the security decisions. I started with the security outcome: what evidence do we need, what should never be collected or shared, and what should count as missing evidence instead of a clean result?”
+
+> “I then broke the work into pieces we could review and test separately: collection, scrubbing, analysis rules, reports, graphs, documentation, and synthetic fixtures. That made it possible to catch false positives, improve the report language, and refine the operator experience without losing the original security intent.”
+
+> “I set the security rules, review criteria, and guardrails. AI helped turn that direction into code, tests, reports, and documentation. The quality came from the back-and-forth review, not from accepting a first draft.”
+
+### If you lose your place
+
+> “AI accelerated the implementation. The security requirements and the final review stayed with me.”
+
+### Transition
+
+> “Let me show the workflow in a safe way using synthetic data.”
+
+---
+
+## Slide 7 — Demo
+
+### Say this
+
+> “For the demo, I will use synthetic data only. First I will show the readiness checks and the collection plan, so it is clear what the tool expects before it touches assessment data.”
+
+> “Then I will run the offline analysis and open the report. I will show one finding, the evidence behind it, the validation guidance, the remediation guidance, and the graph. Finally, I will show the structure of the optional AI handoff and what is deliberately excluded from it.”
+
+### Presenter command cues
+
+Run these as needed; they are not intended to be read from the slide:
+
+```powershell
+.\Invoke-ADCSAuditPipeline.ps1
+doctor
+options
+plan
+analyze
 ```
 
-Key points to say:
+### If you lose your place
 
-- Collection is PowerShell-first and read-only.
-- The static analyzer provides a repeatable baseline: ESC1–ESC11 posture signals, coverage, reports, findings CSV, and graph exports.
-- Tokenization preserves correlation without exposing the original identity values to an external reviewer.
-- A local-only mode exists for engagements where AI sharing is not appropriate; no token map is required in that mode.
-- Missing or unreadable evidence is reported as **Not Evaluated**, not silently treated as clean.
+> “I am showing the same path an operator would use: check readiness, review the plan, analyze evidence, then decide whether a scrubbed AI review is useful.”
 
----
+### Transition
 
-## Why this is an AI enablement use case
-
-The useful AI pattern is not “ask AI to assess the domain.” It is:
-
-1. **Collect the facts that matter** with a purpose-built, bounded collector.
-2. **Apply deterministic checks** for known, testable conditions.
-3. **Remove or tokenize sensitive values** before optional AI review.
-4. **Give AI structured evidence and guardrails** so it can explain, connect, and prioritize—not invent facts.
-5. **Keep a qualified operator in the decision loop** for validation and remediation.
-
-This makes AI useful to more people without giving it uncontrolled access to sensitive systems.
+> “The goal is not a one-off AD CS report. It is a repeatable way to handle security assessment evidence.”
 
 ---
 
-## Static analysis and AI-assisted review are complementary
+## Slide 8 — Where this can go next
 
-| Deterministic offline analysis | AI-assisted review |
-| --- | --- |
-| Repeatable ESC posture checks | Plain-language explanation for different audiences |
-| Stable findings and coverage states | Correlation of related, scrubbed evidence |
-| Regression-tested reports and graph | Environment-aware remediation sequencing |
-| Conservative handling of missing evidence | Suggested validation questions and caveats |
-| Works fully offline | Optional, governed enhancement |
+### Say this
 
-Important boundary: issuance or configuration evidence alone is **not** a compromise claim. AI should not turn an isolated signal into a certainty. It can help an operator decide what to validate next.
+> “The larger idea is simple. Security expertise defines what evidence matters. Sensitive data stays local. The tool produces clear reports, and AI can help when it is useful and approved.”
 
----
+> “CertifEye is the first mature use case because AD CS assessments have a clear evidence model and real remediation value. Going forward, the same approach can support the broader work already underway: ADmission Control for Active Directory posture, GPOsture, DNSense, and AuditAble.”
 
-## How the tool was developed with AI assistance
+> “The goal is not to hand security decisions to AI. The goal is to make expert security work easier to repeat, easier to explain, and easier for the right people to act on.”
 
-This is the practical implementation lesson:
+### If you lose your place
 
-- I began with the security outcome, existing collection logic, real operational constraints, and explicit safety boundaries.
-- I separated the work into small contracts: collection schema, scrubbing, analysis rules, report layout, graphing, documentation, tests, and packaging.
-- I supplied review feedback as a subject-matter expert: false-positive conditions, missing-evidence behavior, remediation accuracy, safe-data boundaries, usability, graph readability, and report wording.
-- I used synthetic regression packages to make sure the tool was not tuned to one environment or one report sample.
-- I required repeatable output and release gates rather than accepting a plausible-looking first result.
-
-> “The human supplied the security model, constraints, and acceptance criteria. AI accelerated implementation and refinement inside those boundaries.”
+> “CertifEye is the first example of a larger approach: strong evidence collection, safe handling of sensitive data, and optional AI help where it genuinely adds value.”
 
 ---
 
-## A concise live demonstration
+## Likely questions
 
-Use synthetic data only.
+### “Why not upload the whole assessment to an AI assistant?”
 
-1. Open CertifEye and show the interactive banner.
-2. Run `doctor` to demonstrate readiness checks and no-data-change behavior.
-3. Run `plan` or show `options` to explain the configured paths, stage, and safety mode.
-4. Run offline analysis against a synthetic package.
-5. Open the HTML report:
-   - executive summary and coverage;
-   - a finding with evidence, validation guidance, and remediation;
-   - the attack-path graph;
-   - the safe upload manifest.
-6. Show the AI handoff structure or skill guidance—never a token map, salt, raw export, or client report.
+> “Because the goal is to minimize what leaves the local environment. CertifEye is designed so the raw exports, token maps, salts, and private evidence stay local. Optional AI review uses a scrubbed package with the relationships needed for analysis.”
 
-Suggested transition:
+### “Can AI tell us that a compromise occurred?”
 
-> “The static report gives us a tested, repeatable baseline. The optional AI review is where we make that evidence more understandable and actionable for the person responsible for fixing it.”
+> “No. The tool and AI can identify evidence that deserves investigation. A qualified security practitioner still has to validate context and corroborate any conclusion.”
 
----
+### “Does the tool require AI?”
 
-## Guardrails worth emphasizing
+> “No. The collector and static report work fully offline. AI is an optional way to improve explanation, prioritization, and validation planning.”
 
-- No raw identities, raw exports, token maps, salts, private manifests, or client data are needed for the demonstration.
-- AI review is optional; local-only analysis remains supported.
-- The collector does not modify Active Directory or perform offensive validation.
-- Evidence quality is visible: confirmed, intended-policy-only, unreadable, not collected, and not evaluated are distinct states.
-- Recommendations remain advisory until an authorized operator validates the environment and change impact.
+### “What made AI useful during development?”
 
----
-
-## Close
-
-> “The value is not simply that AI can write a report. The value is the combination of expert-designed evidence collection, privacy-preserving data handling, deterministic baseline analysis, and AI assistance that helps people understand what to validate and fix next.”
-
-Close with the broader reuse opportunity:
-
-- The same design can support ADmission Control, GPOsture, DNSense, and AuditAble.
-- Each tool remains standalone, but they share a safe data contract and a consistent operator experience.
-- The goal is to widen access to sound security assessment without lowering the bar for evidence or privacy.
-
----
-
-## Q&A prompts
-
-- *“Why not simply upload all domain data to an AI assistant?”*  Because the assessment is designed around data minimization, safe sharing, and operator choice.
-- *“Can AI determine that a compromise happened?”*  No. It can summarize evidence and recommend validation; a qualified practitioner must evaluate context and corroboration.
-- *“Does this require AI to run?”*  No. CertifEye produces its deterministic offline reports without AI. AI is an optional review layer.
-- *“What made AI effective during development?”*  A clear subject-matter model, small verifiable tasks, fixtures, tests, and continuous human review.
-
+> “It was useful because the work had clear security requirements, test cases, and review gates. I supplied the security direction and reviewed the output; AI helped accelerate the implementation work.”
