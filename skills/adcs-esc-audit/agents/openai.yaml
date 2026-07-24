@@ -1,0 +1,7 @@
+interface:
+  display_name: "CertifEye AD CS Assessment"
+  short_description: "Defensive ESC1-ESC11 evidence assessment"
+  default_prompt: "Use $adcs-esc-audit to analyze this current-run scrubbed CertifEye package and produce evidence-backed findings, coverage caveats, and remediation priorities."
+
+policy:
+  allow_implicit_invocation: true

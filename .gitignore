@@ -1,0 +1,29 @@
+# Local assessment data and generated outputs
+Raw_DO_NOT_UPLOAD/
+Scrubbed/
+Private_DO_NOT_UPLOAD/
+Output/
+Working/
+working_dir/
+samples/
+
+# Secrets and local package material
+*.salt
+*.key
+*_token_map_DO_NOT_UPLOAD.csv
+*_run_manifest_DO_NOT_UPLOAD.json
+certifeye_local_only_manifest_DO_NOT_UPLOAD.json
+*.zip
+
+# Python and PowerShell test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+qa_montage.png
+
+# Editor and operating-system files
+.vscode/
+.idea/
+*.tmp
+Thumbs.db
+.DS_Store

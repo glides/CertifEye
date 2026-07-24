@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "certifeye-synthetic-expectations/v1",
+  "generatedBy": "New-CertifEyeSyntheticScenarios.py",
+  "scenarios": {
+    "all-esc-enterprise": {
+      "description": "Broad and recurring evidence with at least one finding for every supported ESC area.",
+      "expectedEscTypes": [
+        "ESC1",
+        "ESC2",
+        "ESC3",
+        "ESC4",
+        "ESC5",
+        "ESC6",
+        "ESC7",
+        "ESC8",
+        "ESC9/10",
+        "ESC11"
+      ],
+      "expectedAbsentEscTypes": [],
+      "expectedCoverage": {
+        "ESC1": "Critical",
+        "ESC2": "High",
+        "ESC3": "Critical",
+        "ESC4": "High",
+        "ESC5": "Critical",
+        "ESC6": "Critical",
+        "ESC7": "High",
+        "ESC8": "Critical",
+        "ESC9/10": "High",
+        "ESC11": "High"
+      },
+      "minimumRows": {
+        "adcs_template_inventory": 48,
+        "exported_certs_normalized": 16800,
+        "adcs_pki_object_acls": 84,
+        "adcs_ca_security": 1,
+        "adcs_dc_enforcement": 12,
+        "adcs_web_enrollment": 4,
+        "high_value_targets": 64
+      },
+      "assessmentDate": "2026-06-30",
+      "minimumEvidenceDays": 730
+    },
+    "hardened-baseline": {
+      "description": "Readable, intentionally hardened posture with benign, denied, and parse-error negative controls.",
+      "expectedEscTypes": [],
+      "expectedAbsentEscTypes": [
+        "ESC1",
+        "ESC2",
+        "ESC3",
+        "ESC4",
+        "ESC5",
+        "ESC6",
+        "ESC7",
+        "ESC8",
+        "ESC9/10",
+        "ESC11"
+      ],
+      "expectedCoverage": {
+        "ESC1": "Clean",
+        "ESC2": "Clean",
+        "ESC3": "Clean",
+        "ESC4": "Clean",
+        "ESC5": "Clean",
+        "ESC6": "Clean",
+        "ESC7": "Clean",
+        "ESC8": "Clean",
+        "ESC9/10": "Clean",
+        "ESC11": "Clean"
+      },
+      "minimumRows": {
+        "adcs_template_inventory": 46,
+        "exported_certs_normalized": 15500,
+        "adcs_pki_object_acls": 76,
+        "adcs_ca_security": 1,
+        "adcs_dc_enforcement": 10,
+        "adcs_web_enrollment": 3,
+        "high_value_targets": 60
+      },
+      "assessmentDate": "2026-06-30",
+      "minimumEvidenceDays": 730
+    },
+    "mixed-enterprise": {
+      "description": "A realistic mixture of open, benign, revoked, unreadable, and mitigated evidence.",
+      "expectedEscTypes": [
+        "ESC1",
+        "ESC3",
+        "ESC4",
+        "ESC5",
+        "ESC8",
+        "ESC9/10",
+        "ESC11"
+      ],
+      "expectedAbsentEscTypes": [
+        "ESC2",
+        "ESC6",
+        "ESC7"
+      ],
+      "expectedCoverage": {
+        "ESC1": "High",
+        "ESC2": "Clean",
+        "ESC3": "High",
+        "ESC4": "High",
+        "ESC5": "Critical",
+        "ESC6": "Clean",
+        "ESC7": "Clean",
+        "ESC8": "High",
+        "ESC9/10": "High",
+        "ESC11": "High"
+      },
+      "minimumRows": {
+        "adcs_template_inventory": 52,
+        "exported_certs_normalized": 17250,
+        "adcs_pki_object_acls": 90,
+        "adcs_ca_security": 1,
+        "adcs_dc_enforcement": 11,
+        "adcs_web_enrollment": 4,
+        "high_value_targets": 66
+      },
+      "assessmentDate": "2026-06-30",
+      "minimumEvidenceDays": 730
+    }
+  }
+}

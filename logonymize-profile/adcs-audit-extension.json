@@ -1,0 +1,19 @@
+{
+  "Name": "AdcsAuditExtension",
+  "Description": "Logonymize overlay for scrubbed AD CS audit CSVs. Preserve risk labels and tokenize identity, host, PKI, request, and relationship fields.",
+  "SchemaColumns": [
+    { "Wildcard": "*evidence*", "Action": "Scan", "Description": "Evidence text can contain names, paths, hosts, and identifiers." },
+    { "Wildcard": "*detail*", "Action": "Scan", "Description": "Detailed read errors and probe output require local review." },
+    { "Regex": "(?i)^(severity|confidence|category|esctype|status|published|parse(status)?|read(status|method)|probed|reachable)$", "Action": "PassThrough", "Description": "Assessment classifications remain useful for analysis." }
+  ],
+  "WholeColumnRules": [
+    { "Regex": "(?i)(requester|principal|trustee|owner|caller|subject|san_upn|high_value|target(name|token)?|manage.*principals)", "Prefix": "PRINCIPAL", "SplitOn": "[;,|]", "Description": "Identity and relationship fields." },
+    { "Regex": "(?i)(computer|host|endpoint|dc(host)?|dns|server)", "Prefix": "COMPUTER", "Description": "Host and endpoint fields." },
+    { "Regex": "(?i)(template|ca_common|pki(object)?|certificate|serial|request(id)?|guid|sid)", "Prefix": "OBJECT", "Description": "PKI object and request identifiers." },
+    { "Regex": "(?i)(salt|secret|password|token_map|private(key)?)", "Prefix": "SECRET", "Description": "Secret-shaped fields must not be uploaded." }
+  ],
+  "LabelRules": [
+    { "Name": "AdcsPrincipals", "Labels": ["requester", "principal", "trustee", "caller", "SAN_UPN"], "Prefix": "PRINCIPAL" },
+    { "Name": "AdcsHosts", "Labels": ["host", "computer", "endpoint", "DC_DnsHostName"], "Prefix": "COMPUTER" }
+  ]
+}

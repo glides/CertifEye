@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "certifeye-release-matrix/v1",
+  "expectedEscTypes": ["ESC1", "ESC2", "ESC3", "ESC4", "ESC5", "ESC6", "ESC7", "ESC8", "ESC9/10", "ESC11"],
+  "expectedAbsentEsc5Principals": ["PRINCIPAL_ENROLL_ONLY", "COMPUTER_CA_HOST"],
+  "requiredArtifacts": ["ADCS_ESC_Findings.csv", "ADCS_Attack_Path_Graph.svg", "ADCS_Attack_Path_Report.html", "ADCS_Attack_Path_BloodHound.json", "ADCS_Attack_Path.cypher", "adcs_upload_manifest.json"]
+}
