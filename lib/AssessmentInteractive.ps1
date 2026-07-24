@@ -444,27 +444,40 @@ function Start-AssessmentInteractive {
         finally { [Console]::TreatControlCAsInput = $oldTreatControlC }
     }
     if($BannerInfo.Count){
+        # Windows PowerShell 5.1 reads UTF-8 scripts without a BOM through the
+        # active ANSI code page. Keep the source ASCII-only and select an
+        # ASCII border there; PowerShell 7 retains the richer box border.
+        $legacyConsole = $PSVersionTable.PSVersion.Major -lt 6
+        if($legacyConsole){
+            $bannerLeft='|'; $bannerRight='|'; $bannerTopLeft='+'; $bannerTopRight='+';
+            $bannerMiddleLeft='+'; $bannerMiddleRight='+'; $bannerBottomLeft='+'; $bannerBottomRight='+'; $bannerHorizontal='-'
+        } else {
+            $bannerLeft=[string][char]0x2551; $bannerRight=[string][char]0x2551
+            $bannerTopLeft=[string][char]0x2554; $bannerTopRight=[string][char]0x2557
+            $bannerMiddleLeft=[string][char]0x2560; $bannerMiddleRight=[string][char]0x2563
+            $bannerBottomLeft=[string][char]0x255A; $bannerBottomRight=[string][char]0x255D; $bannerHorizontal=[string][char]0x2550
+        }
         function Write-AssessmentBannerRow([string]$Text, [ConsoleColor]$TextColor, [int]$Indent = 2) {
             $innerWidth = $width - 2
             $padding = [Math]::Max(0, $innerWidth - $Indent - $Text.Length)
-            Write-Host '║' -ForegroundColor DarkCyan -NoNewline
+            Write-Host $bannerLeft -ForegroundColor DarkCyan -NoNewline
             Write-Host (' ' * $Indent) -NoNewline
             Write-Host $Text -ForegroundColor $TextColor -NoNewline
             Write-Host (' ' * $padding) -NoNewline
-            Write-Host '║' -ForegroundColor DarkCyan
+            Write-Host $bannerRight -ForegroundColor DarkCyan
         }
-        $width=70;$line=('═' * ($width-2))
+        $width=70;$line=($bannerHorizontal * ($width-2))
         Write-Host ''
-        Write-Host ('╔'+$line+'╗') -ForegroundColor DarkCyan
+        Write-Host ($bannerTopLeft+$line+$bannerTopRight) -ForegroundColor DarkCyan
         Write-AssessmentBannerRow -Text ('[>_] '+$ToolName) -TextColor Magenta -Indent 4
         Write-AssessmentBannerRow -Text $Subtitle -TextColor DarkGray -Indent 4
-        Write-Host ('╠'+$line+'╣') -ForegroundColor DarkCyan
+        Write-Host ($bannerMiddleLeft+$line+$bannerMiddleRight) -ForegroundColor DarkCyan
         foreach($label in @('Version','Author','Repo')){
             if($BannerInfo.ContainsKey($label)){
                 Write-AssessmentBannerRow -Text ('> {0,-10} {1}' -f $label,[string]$BannerInfo[$label]) -TextColor Cyan -Indent 2
             }
         }
-        Write-Host ('╚'+$line+'╝') -ForegroundColor DarkCyan
+        Write-Host ($bannerBottomLeft+$line+$bannerBottomRight) -ForegroundColor DarkCyan
         Write-Host ''
     }
     else { Write-Host '';Write-Host ('  >_ '+$ToolName) -ForegroundColor Cyan;Write-Host ('  '+$Subtitle) -ForegroundColor DarkGray }
