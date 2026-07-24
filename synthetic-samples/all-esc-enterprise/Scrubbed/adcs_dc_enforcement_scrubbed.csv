@@ -1,0 +1,13 @@
+DC_DnsHostName,StrongCertificateBindingEnforcement,EnforcementLevel,FullEnforcement,ReadStatus,ReadMethod,ReadDetail,SidExtensionMatchesRequester,SidMismatchLikelyBenign
+COMPUTER_b62988f80f3b6b9c24e82494,2,Full,True,OK,RemoteRegistry,READ_OK,,
+COMPUTER_b6b8b84711680f5424b3c31e,2,Full,True,Live,WinRM,READ_OK,,
+COMPUTER_ada07c7e68aef17b66580ab2,2,Full,True,OK,RemoteRegistry,READ_OK,,
+COMPUTER_ee02c7c7e2532d08650a21cc,2,Full,True,Live,WinRM,READ_OK,,
+COMPUTER_a7c3eac2952a5e8583e21461,2,Full,True,OK,RemoteRegistry,READ_OK,,
+COMPUTER_1cc3c0110d989a908423e1e7,2,Full,True,Live,WinRM,READ_OK,,
+COMPUTER_7f8822847fe3e1ab6bb12066,1,Compatibility,False,OK,RemoteRegistry,READ_OK,,
+COMPUTER_c8f304f2424d4d0fca0b6e9e,1,Compatibility,False,Live,WinRM,READ_OK,,
+COMPUTER_4f516001108f35c6cc2a9812,1,Compatibility,False,OK,RemoteRegistry,READ_OK,,
+COMPUTER_01b8e77f51e5849cb2f693df,1,Compatibility,False,Live,WinRM,READ_OK,,
+COMPUTER_568c32c6d8ef8c9fda11511a,1,Compatibility,False,OK,RemoteRegistry,READ_OK,,
+COMPUTER_9a453b2d321724190d4d24bb,1,Compatibility,False,Live,WinRM,READ_OK,,

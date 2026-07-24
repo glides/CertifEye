@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "adcs-upload-manifest/v1",
+  "scenarioSchemaVersion": "certifeye-synthetic-scenario/v1",
+  "tool": "CertifEye",
+  "synthetic": true,
+  "scenario": "all-esc-enterprise",
+  "description": "Broad and recurring evidence with at least one finding for every supported ESC area.",
+  "assessmentDate": "2026-06-30",
+  "evidenceWindow": {
+    "first": "2023-07-01",
+    "last": "2026-06-30",
+    "days": 1095
+  },
+  "tokenContractVersion": "synthetic-opaque/v1",
+  "hmacLength": 24,
+  "reviewRequired": true,
+  "files": [
+    {
+      "file": "adcs_template_inventory_scrubbed.csv",
+      "role": "adcs_template_inventory",
+      "rows": 48,
+      "bytes": 17616,
+      "sha256": "89b68c148d69f6c97c9ec159b2cba9dcb68b1be0e828c20efd645a1038f812c8"
+    },
+    {
+      "file": "exported_certs_normalized_scrubbed.csv",
+      "role": "exported_certs_normalized",
+      "rows": 16800,
+      "bytes": 10715490,
+      "sha256": "e18a92ac86365f97d0301a72c681331c47d5286a589c7087201a0de835069f22"
+    },
+    {
+      "file": "adcs_pki_object_acls_scrubbed.csv",
+      "role": "adcs_pki_object_acls",
+      "rows": 84,
+      "bytes": 15767,
+      "sha256": "da06c3ba70f686cb44070e895958d2dce4eeb79aa783c7dd9a97d347d3151313"
+    },
+    {
+      "file": "adcs_ca_security_scrubbed.csv",
+      "role": "adcs_ca_security",
+      "rows": 1,
+      "bytes": 485,
+      "sha256": "169c6409848068c80e4119e60a06fd7a44d58d5af884873a8820a8a436db2a18"
+    },
+    {
+      "file": "adcs_dc_enforcement_scrubbed.csv",
+      "role": "adcs_dc_enforcement",
+      "rows": 12,
+      "bytes": 1089,
+      "sha256": "0f662cd1da8646b8fc948d14acd32182696f12874aff286469c5976fe11193a1"
+    },
+    {
+      "file": "adcs_web_enrollment_scrubbed.csv",
+      "role": "adcs_web_enrollment",
+      "rows": 4,
+      "bytes": 1014,
+      "sha256": "3d45577c0f189d9ca8d9664b3250af6e87f96c0381d815fb6cf06246c46a92c3"
+    },
+    {
+      "file": "high_value_targets_scrubbed.csv",
+      "role": "high_value_targets",
+      "rows": 64,
+      "bytes": 5000,
+      "sha256": "3968b50972d56f669efe256487949d228b2def13a44ae64800ae48ed4cad2598"
+    }
+  ],
+  "warnings": [
+    "SYNTHETIC_DATA_ONLY",
+    "NO_TOKEN_MAP_EXISTS"
+  ]
+}

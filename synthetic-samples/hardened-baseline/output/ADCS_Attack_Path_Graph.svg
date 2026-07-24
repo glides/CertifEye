@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="910" viewBox="0 0 2000 910" font-family="Segoe UI, Arial, sans-serif">
+<rect width="2000" height="910" fill="#0f1115"/>
+<defs>
+<marker id="arrow-critical" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#d85a5a"/></marker>
+<marker id="arrow-high" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#e08a57"/></marker>
+<marker id="arrow-medium" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#e0b020"/></marker>
+<marker id="arrow-low" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#59b981"/></marker>
+<marker id="arrow-mitigated" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#2a9d8f"/></marker>
+<marker id="arrow-default" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#7c879a"/></marker>
+</defs>
+<style>.nd{cursor:pointer}.nd:hover rect{stroke:#fff;stroke-width:3}</style>
+<text x="46" y="58" fill="#e8edf4" font-size="34" font-weight="700">CertifEye - AD CS Attack-Path Graph</text>
+<text x="48" y="90" fill="#9aa6b6" font-size="18">generated from the current scrubbed dataset · no client-specific paths are hard-coded</text>
+<rect x="180" y="250" width="1640" height="280" rx="18" fill="#141821" stroke="#2a2f3a"/>
+<text x="1000" y="375" fill="#e8edf4" font-size="30" text-anchor="middle" font-weight="700">No open attack-path findings were generated</text>
+<text x="1000" y="425" fill="#9aa6b6" font-size="19" text-anchor="middle">Review the coverage matrix for clean, mitigated, and not-evaluated ESC areas.</text>
+<g id="graph-legend">
+<rect id="legend-panel" x="80" y="684" rx="12" width="1840" height="178" fill="#141821" stroke="#2a2f3a"/>
+<text x="104" y="718" fill="#e8edf4" font-size="19" font-weight="700">Legend</text>
+<rect x="104" y="739" width="26" height="18" rx="4" fill="#d85a5a"/>
+<text x="140" y="754" fill="#e8edf4" font-size="14.5">Critical</text>
+<rect x="403" y="739" width="26" height="18" rx="4" fill="#e08a57"/>
+<text x="439" y="754" fill="#e8edf4" font-size="14.5">High</text>
+<rect x="701" y="739" width="26" height="18" rx="4" fill="#e0b020"/>
+<text x="737" y="754" fill="#e8edf4" font-size="14.5">Medium</text>
+<rect x="1000" y="739" width="26" height="18" rx="4" fill="#59b981"/>
+<text x="1036" y="754" fill="#e8edf4" font-size="14.5">Low</text>
+<rect x="1299" y="739" width="26" height="18" rx="4" fill="#2a9d8f"/>
+<text x="1335" y="754" fill="#e8edf4" font-size="14.5">Mitigated</text>
+<rect x="1597" y="739" width="26" height="18" rx="4" fill="#6b7482"/>
+<text x="1633" y="754" fill="#e8edf4" font-size="14.5">Not evaluated</text>
+<rect x="104" y="788" width="26" height="18" rx="4" fill="#4f9fe0"/>
+<text x="140" y="803" fill="#e8edf4" font-size="14.5">Principal/Object</text>
+<rect x="404" y="788" width="26" height="18" rx="4" fill="#ab8fd6"/>
+<text x="440" y="803" fill="#e8edf4" font-size="14.5">ESC finding</text>
+<rect x="704" y="788" width="26" height="18" rx="4" fill="#e0b020"/>
+<text x="740" y="803" fill="#e8edf4" font-size="14.5">Impact/target</text>
+<text x="1030" y="803" fill="#9aa6b6" font-size="14">Arrows connect evidence → finding → impact and inherit finding severity.</text>
+<text x="1030" y="834" fill="#9aa6b6" font-size="14">Only the highest-priority current-run findings are shown; hover nodes for full labels.</text>
+</g>
+</svg>

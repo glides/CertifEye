@@ -1,11 +1,11 @@
 # Local assessment data and generated outputs
-Raw_DO_NOT_UPLOAD/
-Scrubbed/
-Private_DO_NOT_UPLOAD/
-Output/
-Working/
-working_dir/
-samples/
+/Raw_DO_NOT_UPLOAD/
+/Scrubbed/
+/Private_DO_NOT_UPLOAD/
+/Output/
+/Working/
+/working_dir/
+/samples/
 
 # Secrets and local package material
 *.salt

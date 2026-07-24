@@ -1,0 +1,5 @@
+CA_CommonName,EndpointKind,EndpointHostName,Scheme,IsHttp,AuthFromMetadata,Probed,Reachable,HttpStatus,AuthSchemesOffered,NtlmOffered,EpaTokenChecking,EpaSource,EpaDetail,Esc8RiskFromMetadata,ESC8Confirmed,ESC8NeedsEpaCheck,ESC8Mitigated,SidExtensionMatchesRequester,SidMismatchLikelyBenign
+CA_2e1fd3acef6dc7f48d1e9451,certsrv,COMPUTER_9482814825d3dc360e819cd2,http,True,Windows,True,True,401,"[""Negotiate"", ""NTLM""]",True,None,Probe,READ_OK,True,False,False,False,,
+CA_2e1fd3acef6dc7f48d1e9451,CES,COMPUTER_507b264ef7a8e6eb273ef341,https,False,Windows,True,True,401,"[""Negotiate"", ""NTLM""]",True,Unknown,Probe,READ_OK,False,False,True,False,,
+CA_2e1fd3acef6dc7f48d1e9451,certsrv,COMPUTER_63f1413e2ff8fbe3e6aa40e8,https,False,Windows,True,True,401,"[""Negotiate""]",False,Require,IIS live read,READ_OK,False,False,False,True,,
+CA_2e1fd3acef6dc7f48d1e9451,CES,COMPUTER_7034fce70867a0dac7048921,https,False,Windows,False,False,,"[""Negotiate""]",,Unknown,Probe,NOT_PROBED,False,False,True,False,,

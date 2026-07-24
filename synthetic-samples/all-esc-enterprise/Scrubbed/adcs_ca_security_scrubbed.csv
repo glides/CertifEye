@@ -1,0 +1,2 @@
+CA_Config,CA_CommonName,ManageCAPrincipals,ManageCertificatesPrincipals,SecuritySource,EditFlagsHex,EditF_AttributeSubjectAltName2,ESC6_CAConfigFlag,InterfaceFlagsHex,IF_EnforceEncryptICertRequest,ESC11Candidate,ESC7Candidate,SidExtensionMatchesRequester,SidMismatchLikelyBenign
+CA_CONFIG_97b92906a82b04f103e9552c,CA_b98bb6a076c0a2a3695aeb65,"[""PRINCIPAL_0d8b92da4bc6c9b143778966""]","[""PRINCIPAL_48d576afffac9d1404843c99""]",Live,0x00040000,True,True,0x00000000,False,True,True,,

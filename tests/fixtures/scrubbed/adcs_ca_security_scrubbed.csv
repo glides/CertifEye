@@ -1,0 +1,2 @@
+CA_CommonName,ManageCAPrincipals,ManageCertificatesPrincipals,EditF_AttributeSubjectAltName2,ESC6_CAConfigFlag,IF_EnforceEncryptICertRequest,ESC7Candidate,ESC11Candidate
+CA_TOKEN,PRINCIPAL_CA_OPERATOR,,True,True,False,True,True

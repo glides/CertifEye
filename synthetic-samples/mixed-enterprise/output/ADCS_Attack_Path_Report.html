@@ -1,0 +1,493 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>CertifEye - AD CS ESC Attack-Path Report</title>
+<style>
+body{margin:0;background:#0f1115;color:#e8edf4;font-family:'Segoe UI',Arial,sans-serif;line-height:1.5}
+.wrap{max-width:1600px;margin:0 auto;padding:32px}
+h1{font-size:30px;margin:0 0 4px} h2{color:#7fb6e6;border-bottom:2px solid #2a9d8f;padding-bottom:6px;margin-top:38px}
+.sub{color:#9aa6b6;margin:0 0 18px}
+.strip{display:flex;flex-wrap:wrap;gap:18px;background:#141821;border:1px solid #2a2f3a;border-radius:10px;padding:14px 18px;font-size:13.5px}
+.strip b{color:#fff}
+.kpis{display:flex;flex-wrap:wrap;gap:16px;margin:20px 0}
+.kpi{background:#141821;border:1px solid #2a2f3a;border-radius:10px;padding:16px 22px;min-width:145px;text-align:center}
+.kn{font-size:34px;font-weight:700} .kl{color:#9aa6b6;font-size:13px;margin-top:4px}
+.caveat{background:#2a2310;border-left:5px solid #d99a00;border-radius:6px;padding:14px 18px;margin:18px 0;color:#f0e2c0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+th{background:#1b2330;color:#cfe0f2;text-align:left;padding:9px 11px;border:1px solid #2a2f3a}
+td{padding:9px 11px;border:1px solid #222833;vertical-align:top}
+tr:nth-child(even) td{background:#141821}
+.findings{table-layout:fixed}
+.findings th,.findings td{overflow-wrap:anywhere;word-break:break-word}
+.findings td:nth-child(1){font-family:Consolas,'Cascadia Mono',monospace;font-size:12px}
+.findings td:nth-child(2),.findings td:nth-child(3){white-space:nowrap}
+.pathcards{display:grid;gap:14px;margin:14px 0 22px}
+.pathcard{background:#141821;border:1px solid #2a2f3a;border-radius:10px;padding:14px 16px;border-left:4px solid var(--path-color)}
+.pathcard h3{font-size:15px;margin:0 0 10px;color:#f3f6fa}
+.pathcard p{color:#b7c8dc;font-size:13px;margin:9px 0 0}
+.pathflow{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.pathnode{display:inline-block;background:#1b2330;border:1px solid #3a4658;border-radius:6px;padding:4px 8px;font-size:12.5px;font-weight:600;overflow-wrap:anywhere;max-width:34ch}
+.pathnode.findingref{color:#fff;border-color:var(--path-color)}
+.patharrow{color:#ff8a86;font-size:12px;font-weight:700}
+.verified{background:#10251d;border:1px solid #235b43;border-left:5px solid #59b981;border-radius:8px;padding:12px 18px;color:#baf5cf}
+.verified li::marker{color:#74d69a}
+.graphcontrols{display:flex;gap:8px;align-items:center;margin:0 0 10px}
+.graphcontrols button{background:#1b2330;color:#dce8f5;border:1px solid #3a4658;border-radius:6px;padding:7px 12px;cursor:pointer;font-weight:600}
+.graphcontrols button:hover,.graphcontrols button:focus{border-color:#7fb6e6;outline:none}
+.graphcontrols .hint{color:#9aa6b6;font-size:12.5px;margin-left:6px}
+.graphbox{background:#0f1115;border:1px solid #2a2f3a;border-radius:10px;padding:8px;overflow:auto;scrollbar-color:#445064 #141821}
+.graphbox svg{display:block;width:1800px;max-width:none;height:auto}
+.graphbox.fit svg{width:100%;max-width:100%;height:auto}
+ul,ol{padding-left:22px} li{margin:6px 0}
+.pill{color:#fff;padding:2px 10px;border-radius:11px;font-size:12px;font-weight:700;white-space:nowrap}
+.foot{margin-top:40px;color:#7c879a;font-size:12.5px;border-top:1px solid #2a2f3a;padding-top:16px}
+</style></head><body><div class="wrap">
+<h1>CertifEye - AD CS ESC Attack-Path Report</h1>
+<p class="sub">Defensive review of scrubbed AD CS exports · generated for Current audit dataset · 2026-06-30</p>
+
+<div class="strip">
+<span><b>17,250</b> certificate rows</span>
+<span><b>52</b> templates</span>
+<span><b>90</b> PKI ACEs</span>
+<span><b>1</b> CA security row(s)</span>
+<span><b>11</b> DC row(s)</span>
+<span><b>4</b> web endpoint row(s)</span>
+<span><b>66</b> high-value token(s)</span>
+</div>
+
+<div class="kpis"><div class="kpi"><div class="kn" style="color:#b00020">1</div><div class="kl">Critical</div></div><div class="kpi"><div class="kn" style="color:#d9534f">6</div><div class="kl">High</div></div><div class="kpi"><div class="kn" style="color:#d99a00">3</div><div class="kl">Medium</div></div><div class="kpi"><div class="kn" style="color:#15365c">10</div><div class="kl">Total findings</div></div><div class="kpi"><div class="kn" style="color:#15365c">1</div><div class="kl">ESC1 templates</div></div><div class="kpi"><div class="kn" style="color:#15365c">7</div><div class="kl">Input files</div></div></div>
+
+<div class="caveat"><b>Read first:</b> Issued-certificate evidence proves a certificate was <i>issued</i> — not that it was used to authenticate. Confirmation requires DC/Kerberos certificate-authentication logs. Posture findings describe conditions that can enable abuse, not proof that abuse occurred.</div>
+
+<h2>ESC coverage matrix</h2>
+<table><tr><th>ESC</th><th>Status</th><th>Evidence</th></tr><tr><td><b>ESC1</b></td><td><span class="pill" style="background:#d9534f">High</span></td><td>1 ESC1-shaped published template(s); 10 requester/SAN mismatch issuance row(s).</td></tr><tr><td><b>ESC2</b></td><td><span class="pill" style="background:#3f8f5b">Clean</span></td><td>0 Any Purpose/no-EKU issued certificate row(s).</td></tr><tr><td><b>ESC3</b></td><td><span class="pill" style="background:#d9534f">High</span></td><td>6 enrollment-agent certificate row(s); 6 on-behalf-of row(s).</td></tr><tr><td><b>ESC4</b></td><td><span class="pill" style="background:#d9534f">High</span></td><td>1 template(s) flagged with dangerous template-control rights.</td></tr><tr><td><b>ESC5</b></td><td><span class="pill" style="background:#b00020">Critical</span></td><td>2 write/control PKI ACE(s) after excluding enroll-only and CA-host self-control rows.</td></tr><tr><td><b>ESC6</b></td><td><span class="pill" style="background:#3f8f5b">Clean</span></td><td>CA flag true on 0 CA row(s); 0 strong issuance-side SAN-attribute indicator row(s).</td></tr><tr><td><b>ESC7</b></td><td><span class="pill" style="background:#3f8f5b">Clean</span></td><td>0 CA row(s) marked ESC7Candidate.</td></tr><tr><td><b>ESC8</b></td><td><span class="pill" style="background:#d9534f">High</span></td><td>4 endpoint row(s); confirmed=0, metadata risk=1, needs EPA check=3.</td></tr><tr><td><b>ESC9/10</b></td><td><span class="pill" style="background:#d9534f">High</span></td><td>SID signals=14; DC Full enforcement 6/10 readable row(s); unreadable=1.</td></tr><tr><td><b>ESC11</b></td><td><span class="pill" style="background:#d9534f">High</span></td><td>1 CA row(s) marked ESC11Candidate or not enforcing encrypted ICertRequest.</td></tr></table>
+
+<h2>Attack-path graph</h2>
+<p class="sub">The graph is built from the current findings only. Hover nodes for details.</p>
+<div class="graphcontrols">
+<button type="button" onclick="setGraphFit(false)">Readable size</button>
+<button type="button" onclick="setGraphFit(true)">Fit width</button>
+<span class="hint">Readable size preserves label clarity and may scroll horizontally on a smaller screen.</span>
+</div>
+<div id="attackGraph" class="graphbox"><svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1418" viewBox="0 0 2000 1418" font-family="Segoe UI, Arial, sans-serif">
+<rect width="2000" height="1418" fill="#0f1115"/>
+<defs>
+<marker id="arrow-critical" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#d85a5a"/></marker>
+<marker id="arrow-high" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#e08a57"/></marker>
+<marker id="arrow-medium" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#e0b020"/></marker>
+<marker id="arrow-low" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#59b981"/></marker>
+<marker id="arrow-mitigated" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#2a9d8f"/></marker>
+<marker id="arrow-default" markerWidth="11" markerHeight="11" refX="9" refY="3.2" orient="auto"><path d="M0,0 L9,3.2 L0,6.4 z" fill="#7c879a"/></marker>
+</defs>
+<style>.nd{cursor:pointer}.nd:hover rect{stroke:#fff;stroke-width:3}</style>
+<text x="46" y="58" fill="#e8edf4" font-size="34" font-weight="700">CertifEye - AD CS Attack-Path Graph</text>
+<text x="48" y="90" fill="#9aa6b6" font-size="18">generated from the current scrubbed dataset · no client-specific paths are hard-coded</text>
+<text x="210.0" y="135" fill="#9aa6b6" font-size="17" font-weight="700" letter-spacing="1.5" text-anchor="middle">PRINCIPAL/OBJECT</text>
+<g class="nd"><title>Principal/Object
+PRINCIPAL_1a8fce5017e7babdcbd920c3
+Severity: Critical</title>
+<rect class="node-box" x="80" y="219" rx="11" ry="11" width="260" height="72" fill="#4f9fe0" stroke="#d85a5a" stroke-width="2"/>
+<text x="210.0" y="248.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="210.0" dy="0">PRINCIPAL_</tspan>
+<tspan x="210.0" dy="18">1a8fce5017e7babdcbd920…</tspan></text>
+<text x="210.0" y="311" fill="#d85a5a" font-size="13.5" font-weight="700" text-anchor="middle">Critical</text>
+</g>
+<g class="nd"><title>Principal/Object
+TPL_8a51cba45cc56d7160b059b2
+Severity: Medium</title>
+<rect class="node-box" x="80" y="317" rx="11" ry="11" width="260" height="72" fill="#4f9fe0" stroke="#e0b020" stroke-width="2"/>
+<text x="210.0" y="358.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">TPL_8a51cba45cc56d7160b059b2</text>
+<text x="210.0" y="409" fill="#e0b020" font-size="13.5" font-weight="700" text-anchor="middle">Medium</text>
+</g>
+<g class="nd"><title>Principal/Object
+CA_2e1fd3acef6dc7f48d1e9451
+Severity: High</title>
+<rect class="node-box" x="80" y="415" rx="11" ry="11" width="260" height="72" fill="#4f9fe0" stroke="#e08a57" stroke-width="2"/>
+<text x="210.0" y="456.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">CA_2e1fd3acef6dc7f48d1e9451</text>
+<text x="210.0" y="507" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>Principal/Object
+Enrollment Agent / on-behalf-of issuance
+Severity: High</title>
+<rect class="node-box" x="80" y="513" rx="11" ry="11" width="260" height="72" fill="#4f9fe0" stroke="#e08a57" stroke-width="2"/>
+<text x="210.0" y="542.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="210.0" dy="0">Enrollment Agent /</tspan>
+<tspan x="210.0" dy="18">on-behalf-of issuance</tspan></text>
+<text x="210.0" y="605" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>Principal/Object
+PRINCIPAL_db66978dcec117f0da16f56f
+Severity: High</title>
+<rect class="node-box" x="80" y="611" rx="11" ry="11" width="260" height="72" fill="#4f9fe0" stroke="#e08a57" stroke-width="2"/>
+<text x="210.0" y="640.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="210.0" dy="0">PRINCIPAL_</tspan>
+<tspan x="210.0" dy="18">db66978dcec117f0da16f5…</tspan></text>
+<text x="210.0" y="703" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>Principal/Object
+COMPUTER_9482814825d3dc360e819cd2
+Severity: High</title>
+<rect class="node-box" x="80" y="709" rx="11" ry="11" width="260" height="72" fill="#4f9fe0" stroke="#e08a57" stroke-width="2"/>
+<text x="210.0" y="738.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="210.0" dy="0">COMPUTER_</tspan>
+<tspan x="210.0" dy="18">9482814825d3dc360e819c…</tspan></text>
+<text x="210.0" y="801" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>Principal/Object
+SID security extension / DC enforcement
+Severity: High</title>
+<rect class="node-box" x="80" y="807" rx="11" ry="11" width="260" height="72" fill="#4f9fe0" stroke="#e08a57" stroke-width="2"/>
+<text x="210.0" y="836.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="210.0" dy="0">SID security extension / DC</tspan>
+<tspan x="210.0" dy="18">enforcement</tspan></text>
+<text x="210.0" y="899" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>Principal/Object
+COMPUTER_7034fce70867a0dac7048921
+Severity: Medium</title>
+<rect class="node-box" x="80" y="905" rx="11" ry="11" width="260" height="72" fill="#4f9fe0" stroke="#e0b020" stroke-width="2"/>
+<text x="210.0" y="934.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="210.0" dy="0">COMPUTER_</tspan>
+<tspan x="210.0" dy="18">7034fce70867a0dac70489…</tspan></text>
+<text x="210.0" y="997" fill="#e0b020" font-size="13.5" font-weight="700" text-anchor="middle">Medium</text>
+</g>
+<g class="nd"><title>Principal/Object
+COMPUTER_507b264ef7a8e6eb273ef341
+Severity: Medium</title>
+<rect class="node-box" x="80" y="1003" rx="11" ry="11" width="260" height="72" fill="#4f9fe0" stroke="#e0b020" stroke-width="2"/>
+<text x="210.0" y="1032.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="210.0" dy="0">COMPUTER_</tspan>
+<tspan x="210.0" dy="18">507b264ef7a8e6eb273ef3…</tspan></text>
+<text x="210.0" y="1095" fill="#e0b020" font-size="13.5" font-weight="700" text-anchor="middle">Medium</text>
+</g>
+<text x="1000.0" y="135" fill="#9aa6b6" font-size="17" font-weight="700" letter-spacing="1.5" text-anchor="middle">ESC FINDING</text>
+<g class="nd"><title>ESC finding
+F01-ESC5
+Severity: Critical</title>
+<rect class="node-box" x="870" y="170" rx="11" ry="11" width="260" height="72" fill="#ab8fd6" stroke="#d85a5a" stroke-width="2"/>
+<text x="1000.0" y="211.0" fill="#10131a" font-size="15" font-weight="700" text-anchor="middle">F01-ESC5</text>
+<text x="1000.0" y="262" fill="#d85a5a" font-size="13.5" font-weight="700" text-anchor="middle">Critical</text>
+</g>
+<g class="nd"><title>ESC finding
+F02-ESC1
+Severity: High</title>
+<rect class="node-box" x="870" y="268" rx="11" ry="11" width="260" height="72" fill="#ab8fd6" stroke="#e08a57" stroke-width="2"/>
+<text x="1000.0" y="309.0" fill="#10131a" font-size="15" font-weight="700" text-anchor="middle">F02-ESC1</text>
+<text x="1000.0" y="360" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>ESC finding
+F03-ESC11
+Severity: High</title>
+<rect class="node-box" x="870" y="366" rx="11" ry="11" width="260" height="72" fill="#ab8fd6" stroke="#e08a57" stroke-width="2"/>
+<text x="1000.0" y="407.0" fill="#10131a" font-size="15" font-weight="700" text-anchor="middle">F03-ESC11</text>
+<text x="1000.0" y="458" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>ESC finding
+F04-ESC3
+Severity: High</title>
+<rect class="node-box" x="870" y="464" rx="11" ry="11" width="260" height="72" fill="#ab8fd6" stroke="#e08a57" stroke-width="2"/>
+<text x="1000.0" y="505.0" fill="#10131a" font-size="15" font-weight="700" text-anchor="middle">F04-ESC3</text>
+<text x="1000.0" y="556" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>ESC finding
+F05-ESC4
+Severity: High</title>
+<rect class="node-box" x="870" y="562" rx="11" ry="11" width="260" height="72" fill="#ab8fd6" stroke="#e08a57" stroke-width="2"/>
+<text x="1000.0" y="603.0" fill="#10131a" font-size="15" font-weight="700" text-anchor="middle">F05-ESC4</text>
+<text x="1000.0" y="654" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>ESC finding
+F06-ESC8
+Severity: High</title>
+<rect class="node-box" x="870" y="660" rx="11" ry="11" width="260" height="72" fill="#ab8fd6" stroke="#e08a57" stroke-width="2"/>
+<text x="1000.0" y="701.0" fill="#10131a" font-size="15" font-weight="700" text-anchor="middle">F06-ESC8</text>
+<text x="1000.0" y="752" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>ESC finding
+F07-ESC9-10
+Severity: High</title>
+<rect class="node-box" x="870" y="758" rx="11" ry="11" width="260" height="72" fill="#ab8fd6" stroke="#e08a57" stroke-width="2"/>
+<text x="1000.0" y="799.0" fill="#10131a" font-size="15" font-weight="700" text-anchor="middle">F07-ESC9-10</text>
+<text x="1000.0" y="850" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>ESC finding
+F08-ESC1
+Severity: Medium</title>
+<rect class="node-box" x="870" y="856" rx="11" ry="11" width="260" height="72" fill="#ab8fd6" stroke="#e0b020" stroke-width="2"/>
+<text x="1000.0" y="897.0" fill="#10131a" font-size="15" font-weight="700" text-anchor="middle">F08-ESC1</text>
+<text x="1000.0" y="948" fill="#e0b020" font-size="13.5" font-weight="700" text-anchor="middle">Medium</text>
+</g>
+<g class="nd"><title>ESC finding
+F09-ESC8
+Severity: Medium</title>
+<rect class="node-box" x="870" y="954" rx="11" ry="11" width="260" height="72" fill="#ab8fd6" stroke="#e0b020" stroke-width="2"/>
+<text x="1000.0" y="995.0" fill="#10131a" font-size="15" font-weight="700" text-anchor="middle">F09-ESC8</text>
+<text x="1000.0" y="1046" fill="#e0b020" font-size="13.5" font-weight="700" text-anchor="middle">Medium</text>
+</g>
+<g class="nd"><title>ESC finding
+F10-ESC8
+Severity: Medium</title>
+<rect class="node-box" x="870" y="1052" rx="11" ry="11" width="260" height="72" fill="#ab8fd6" stroke="#e0b020" stroke-width="2"/>
+<text x="1000.0" y="1093.0" fill="#10131a" font-size="15" font-weight="700" text-anchor="middle">F10-ESC8</text>
+<text x="1000.0" y="1144" fill="#e0b020" font-size="13.5" font-weight="700" text-anchor="middle">Medium</text>
+</g>
+<text x="1790.0" y="135" fill="#9aa6b6" font-size="17" font-weight="700" letter-spacing="1.5" text-anchor="middle">IMPACT/TARGET</text>
+<g class="nd"><title>Impact/target
+CertificationAuthoritiesContainer;NTAuthCertificates
+Severity: Critical</title>
+<rect class="node-box" x="1660" y="170" rx="11" ry="11" width="260" height="72" fill="#e0b020" stroke="#d85a5a" stroke-width="2"/>
+<text x="1790.0" y="211.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">CertificationAuthoritiesCo…</text>
+<text x="1790.0" y="262" fill="#d85a5a" font-size="13.5" font-weight="700" text-anchor="middle">Critical</text>
+</g>
+<g class="nd"><title>Impact/target
+SAN target differs from requester
+Severity: High</title>
+<rect class="node-box" x="1660" y="268" rx="11" ry="11" width="260" height="72" fill="#e0b020" stroke="#e08a57" stroke-width="2"/>
+<text x="1790.0" y="297.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="1790.0" dy="0">SAN target differs from</tspan>
+<tspan x="1790.0" dy="18">requester</tspan></text>
+<text x="1790.0" y="360" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>Impact/target
+CA_2e1fd3acef6dc7f48d1e9451
+Severity: High</title>
+<rect class="node-box" x="1660" y="366" rx="11" ry="11" width="260" height="72" fill="#e0b020" stroke="#e08a57" stroke-width="2"/>
+<text x="1790.0" y="407.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">CA_2e1fd3acef6dc7f48d1e9451</text>
+<text x="1790.0" y="458" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>Impact/target
+Enrollment Agent / on-behalf-of issuance
+Severity: High</title>
+<rect class="node-box" x="1660" y="464" rx="11" ry="11" width="260" height="72" fill="#e0b020" stroke="#e08a57" stroke-width="2"/>
+<text x="1790.0" y="493.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="1790.0" dy="0">Enrollment Agent /</tspan>
+<tspan x="1790.0" dy="18">on-behalf-of issuance</tspan></text>
+<text x="1790.0" y="556" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>Impact/target
+TPL_4d61efba5e97e9618882ebee
+Severity: High</title>
+<rect class="node-box" x="1660" y="562" rx="11" ry="11" width="260" height="72" fill="#e0b020" stroke="#e08a57" stroke-width="2"/>
+<text x="1790.0" y="603.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">TPL_4d61efba5e97e9618882ebee</text>
+<text x="1790.0" y="654" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>Impact/target
+COMPUTER_9482814825d3dc360e819cd2
+Severity: High</title>
+<rect class="node-box" x="1660" y="660" rx="11" ry="11" width="260" height="72" fill="#e0b020" stroke="#e08a57" stroke-width="2"/>
+<text x="1790.0" y="689.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="1790.0" dy="0">COMPUTER_</tspan>
+<tspan x="1790.0" dy="18">9482814825d3dc360e819c…</tspan></text>
+<text x="1790.0" y="752" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>Impact/target
+SID security extension / DC enforcement
+Severity: High</title>
+<rect class="node-box" x="1660" y="758" rx="11" ry="11" width="260" height="72" fill="#e0b020" stroke="#e08a57" stroke-width="2"/>
+<text x="1790.0" y="787.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="1790.0" dy="0">SID security extension / DC</tspan>
+<tspan x="1790.0" dy="18">enforcement</tspan></text>
+<text x="1790.0" y="850" fill="#e08a57" font-size="13.5" font-weight="700" text-anchor="middle">High</text>
+</g>
+<g class="nd"><title>Impact/target
+TPL_8a51cba45cc56d7160b059b2
+Severity: Medium</title>
+<rect class="node-box" x="1660" y="856" rx="11" ry="11" width="260" height="72" fill="#e0b020" stroke="#e0b020" stroke-width="2"/>
+<text x="1790.0" y="897.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">TPL_8a51cba45cc56d7160b059b2</text>
+<text x="1790.0" y="948" fill="#e0b020" font-size="13.5" font-weight="700" text-anchor="middle">Medium</text>
+</g>
+<g class="nd"><title>Impact/target
+COMPUTER_7034fce70867a0dac7048921
+Severity: Medium</title>
+<rect class="node-box" x="1660" y="954" rx="11" ry="11" width="260" height="72" fill="#e0b020" stroke="#e0b020" stroke-width="2"/>
+<text x="1790.0" y="983.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="1790.0" dy="0">COMPUTER_</tspan>
+<tspan x="1790.0" dy="18">7034fce70867a0dac70489…</tspan></text>
+<text x="1790.0" y="1046" fill="#e0b020" font-size="13.5" font-weight="700" text-anchor="middle">Medium</text>
+</g>
+<g class="nd"><title>Impact/target
+COMPUTER_507b264ef7a8e6eb273ef341
+Severity: Medium</title>
+<rect class="node-box" x="1660" y="1052" rx="11" ry="11" width="260" height="72" fill="#e0b020" stroke="#e0b020" stroke-width="2"/>
+<text x="1790.0" y="1081.0" fill="#10131a" font-size="13.5" font-weight="700" text-anchor="middle">
+<tspan x="1790.0" dy="0">COMPUTER_</tspan>
+<tspan x="1790.0" dy="18">507b264ef7a8e6eb273ef3…</tspan></text>
+<text x="1790.0" y="1144" fill="#e0b020" font-size="13.5" font-weight="700" text-anchor="middle">Medium</text>
+</g>
+<g class="edge"><title>Critical
+Severity: Critical</title>
+<path d="M 340 255 C 531 255, 679 206, 870 206" fill="none" stroke="#d85a5a" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-critical)"/>
+</g>
+<g class="edge"><title>can enable
+Severity: Critical</title>
+<path d="M 1130 206 C 1321 206, 1469 206, 1660 206" fill="none" stroke="#d85a5a" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-critical)"/>
+</g>
+<g class="edge"><title>High
+Severity: High</title>
+<path d="M 340 353 C 531 353, 679 304, 870 304" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>can enable
+Severity: High</title>
+<path d="M 1130 304 C 1321 304, 1469 304, 1660 304" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>High
+Severity: High</title>
+<path d="M 340 451 C 531 451, 679 402, 870 402" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>can enable
+Severity: High</title>
+<path d="M 1130 402 C 1321 402, 1469 402, 1660 402" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>High
+Severity: High</title>
+<path d="M 340 549 C 531 549, 679 500, 870 500" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>can enable
+Severity: High</title>
+<path d="M 1130 500 C 1321 500, 1469 500, 1660 500" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>High
+Severity: High</title>
+<path d="M 340 647 C 531 647, 679 598, 870 598" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>can enable
+Severity: High</title>
+<path d="M 1130 598 C 1321 598, 1469 598, 1660 598" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>High
+Severity: High</title>
+<path d="M 340 745 C 531 745, 679 696, 870 696" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>can enable
+Severity: High</title>
+<path d="M 1130 696 C 1321 696, 1469 696, 1660 696" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>High
+Severity: High</title>
+<path d="M 340 843 C 531 843, 679 794, 870 794" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>can enable
+Severity: High</title>
+<path d="M 1130 794 C 1321 794, 1469 794, 1660 794" fill="none" stroke="#e08a57" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-high)"/>
+</g>
+<g class="edge"><title>Medium
+Severity: Medium</title>
+<path d="M 340 353 C 531 353, 679 892, 870 892" fill="none" stroke="#e0b020" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-medium)"/>
+</g>
+<g class="edge"><title>can enable
+Severity: Medium</title>
+<path d="M 1130 892 C 1321 892, 1469 892, 1660 892" fill="none" stroke="#e0b020" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-medium)"/>
+</g>
+<g class="edge"><title>Medium
+Severity: Medium</title>
+<path d="M 340 941 C 531 941, 679 990, 870 990" fill="none" stroke="#e0b020" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-medium)"/>
+</g>
+<g class="edge"><title>can enable
+Severity: Medium</title>
+<path d="M 1130 990 C 1321 990, 1469 990, 1660 990" fill="none" stroke="#e0b020" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-medium)"/>
+</g>
+<g class="edge"><title>Medium
+Severity: Medium</title>
+<path d="M 340 1039 C 531 1039, 679 1088, 870 1088" fill="none" stroke="#e0b020" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-medium)"/>
+</g>
+<g class="edge"><title>can enable
+Severity: Medium</title>
+<path d="M 1130 1088 C 1321 1088, 1469 1088, 1660 1088" fill="none" stroke="#e0b020" stroke-width="2.2" stroke-opacity="0.9" marker-end="url(#arrow-medium)"/>
+</g>
+<g id="graph-legend">
+<rect id="legend-panel" x="80" y="1192" rx="12" width="1840" height="178" fill="#141821" stroke="#2a2f3a"/>
+<text x="104" y="1226" fill="#e8edf4" font-size="19" font-weight="700">Legend</text>
+<rect x="104" y="1247" width="26" height="18" rx="4" fill="#d85a5a"/>
+<text x="140" y="1262" fill="#e8edf4" font-size="14.5">Critical</text>
+<rect x="403" y="1247" width="26" height="18" rx="4" fill="#e08a57"/>
+<text x="439" y="1262" fill="#e8edf4" font-size="14.5">High</text>
+<rect x="701" y="1247" width="26" height="18" rx="4" fill="#e0b020"/>
+<text x="737" y="1262" fill="#e8edf4" font-size="14.5">Medium</text>
+<rect x="1000" y="1247" width="26" height="18" rx="4" fill="#59b981"/>
+<text x="1036" y="1262" fill="#e8edf4" font-size="14.5">Low</text>
+<rect x="1299" y="1247" width="26" height="18" rx="4" fill="#2a9d8f"/>
+<text x="1335" y="1262" fill="#e8edf4" font-size="14.5">Mitigated</text>
+<rect x="1597" y="1247" width="26" height="18" rx="4" fill="#6b7482"/>
+<text x="1633" y="1262" fill="#e8edf4" font-size="14.5">Not evaluated</text>
+<rect x="104" y="1296" width="26" height="18" rx="4" fill="#4f9fe0"/>
+<text x="140" y="1311" fill="#e8edf4" font-size="14.5">Principal/Object</text>
+<rect x="404" y="1296" width="26" height="18" rx="4" fill="#ab8fd6"/>
+<text x="440" y="1311" fill="#e8edf4" font-size="14.5">ESC finding</text>
+<rect x="704" y="1296" width="26" height="18" rx="4" fill="#e0b020"/>
+<text x="740" y="1311" fill="#e8edf4" font-size="14.5">Impact/target</text>
+<text x="1030" y="1311" fill="#9aa6b6" font-size="14">Arrows connect evidence → finding → impact and inherit finding severity.</text>
+<text x="1030" y="1342" fill="#9aa6b6" font-size="14">Only the highest-priority current-run findings are shown; hover nodes for full labels.</text>
+</g>
+</svg></div>
+
+<h2>Primary attack paths</h2>
+<p class="sub">A concise view of the highest-priority current-run relationships. These cards describe evidence-backed prerequisites, not proof of successful abuse.</p>
+<div class="pathcards">
+    <article class="pathcard" style="--path-color:#b00020">
+      <h3>PKI control-plane path (ESC5)</h3>
+      <div class="pathflow">
+        <span class="pathnode">PRINCIPAL_1a8fce5017e7babdcbd920c3</span>
+        <span class="patharrow">evidence supports →</span>
+        <span class="pathnode findingref">F01-ESC5</span>
+        <span class="patharrow">can affect →</span>
+        <span class="pathnode">CertificationAuthoritiesContainer;NTAuthCertificates</span>
+      </div>
+      <p>Write/control rights over PKI AD objects can let that principal alter certificate trust, publish or modify templates, or change enrollment-service objects. That is a PKI privilege-escalation path if the principal is not an intended PKI administrator.</p>
+    </article>
+    <article class="pathcard" style="--path-color:#d9534f">
+      <h3>Requester-supplied identity path (ESC1)</h3>
+      <div class="pathflow">
+        <span class="pathnode">TPL_8a51cba45cc56d7160b059b2</span>
+        <span class="patharrow">evidence supports →</span>
+        <span class="pathnode findingref">F02-ESC1</span>
+        <span class="patharrow">can affect →</span>
+        <span class="pathnode">SAN target differs from requester</span>
+      </div>
+      <p>Requester/SAN identity mismatch on an authentication-capable certificate is the core signal for certificate-based impersonation. Issuance alone does not prove the certificate was used.</p>
+    </article>
+    <article class="pathcard" style="--path-color:#d9534f">
+      <h3>Unencrypted RPC enrollment path (ESC11)</h3>
+      <div class="pathflow">
+        <span class="pathnode">CA_2e1fd3acef6dc7f48d1e9451</span>
+        <span class="patharrow">evidence supports →</span>
+        <span class="pathnode findingref">F03-ESC11</span>
+        <span class="patharrow">can affect →</span>
+        <span class="pathnode">CA_2e1fd3acef6dc7f48d1e9451</span>
+      </div>
+      <p>If request traffic is not protected, NTLM relay paths to the CA RPC interface may be possible depending on environment controls.</p>
+    </article>
+    <article class="pathcard" style="--path-color:#d9534f">
+      <h3>Enrollment-agent / on-behalf-of path (ESC3)</h3>
+      <div class="pathflow">
+        <span class="pathnode">Enrollment Agent / on-behalf-of issuance</span>
+        <span class="patharrow">evidence supports →</span>
+        <span class="pathnode findingref">F04-ESC3</span>
+        <span class="patharrow">can affect →</span>
+        <span class="pathnode">Enrollment Agent / on-behalf-of issuance</span>
+      </div>
+      <p>Enrollment Agent capability can be legitimate, but it can also enable requesting certificates on behalf of other principals if not tightly restricted.</p>
+    </article></div>
+
+<h2 id="findings">Findings</h2>
+<table class="findings">
+<colgroup><col style="width:10%"><col style="width:9%"><col style="width:7%"><col style="width:15%"><col style="width:23%"><col style="width:36%"></colgroup>
+<tr><th>Finding</th><th>Severity</th><th>Conf.</th><th>Category</th><th>Object / principal</th><th>Evidence</th></tr><tr><td>F01-ESC5</td><td><span class="pill" style="background:#b00020">Critical</span></td><td>High</td><td>Template / PKI posture issue</td><td>CertificationAuthoritiesContainer;NTAuthCertificates</td><td>2 dangerous PKI-object ACE(s) for PRINCIPAL_1a8fce5017e7babdcbd920c3: object types CertificationAuthoritiesContainer, NTAuthCertificates; rights include GenericAll, WriteDacl. Enroll-only rights were not counted as ESC5 control.</td></tr><tr><td>F02-ESC1</td><td><span class="pill" style="background:#d9534f">High</span></td><td>High</td><td>Likely ESC1 misuse</td><td>TPL_8a51cba45cc56d7160b059b2</td><td>10 certificate issuance row(s) on template &#x27;TPL_8a51cba45cc56d7160b059b2&#x27; have identity mismatch status DifferentMappedIdentity; 10 joined to template inventory, 10 are authentication-capable, and 0 involve HV/high-value tokens; first=2023-07-01, last=2025-04-18, revoked=0/10. Sample RequestIDs: REQ_0d584f2d4d82d5128f1ca45e;REQ_1effb448ce65d4e5f58979ca;REQ_331fb5da49982c6ba08b5931;REQ_52e68526ae1dec2d7d609721;REQ_68eb7786be2ceba9dccb9074;REQ_6b2f953a3acafea5773bae38;REQ_8a4c524373af052d1e2fb8a2;REQ_8fb39e7cad8f9ad2d46d9eb2.</td></tr><tr><td>F03-ESC11</td><td><span class="pill" style="background:#d9534f">High</span></td><td>High</td><td>Template / PKI posture issue</td><td>CA_2e1fd3acef6dc7f48d1e9451</td><td>CA security export indicates encrypted ICertRequest enforcement is not required for CA_2e1fd3acef6dc7f48d1e9451 (ESC11Candidate=True, IF_EnforceEncryptICertRequest=False).</td></tr><tr><td>F04-ESC3</td><td><span class="pill" style="background:#d9534f">High</span></td><td>High</td><td>Suspicious issuance needing validation</td><td>Enrollment Agent / on-behalf-of issuance</td><td>6 certificate row(s) carry the Certificate Request Agent EKU and 6 on-behalf-of row(s) show caller/requester differences; high-value OBO rows: 0; first=2025-04-17, last=2026-04-17, revoked=0/6.</td></tr><tr><td>F05-ESC4</td><td><span class="pill" style="background:#d9534f">High</span></td><td>High</td><td>Template / PKI posture issue</td><td>TPL_4d61efba5e97e9618882ebee</td><td>PRINCIPAL_db66978dcec117f0da16f56f has dangerous template-control rights on 1 template(s); 1 are published. Sample templates: TPL_4d61efba5e97e9618882ebee.</td></tr><tr><td>F06-ESC8</td><td><span class="pill" style="background:#d9534f">High</span></td><td>High</td><td>Template / PKI posture issue</td><td>COMPUTER_9482814825d3dc360e819cd2</td><td>Web enrollment endpoint COMPUTER_9482814825d3dc360e819cd2: Scheme=http, IsHttp=True, NTLM offered=True, EPA=None, ESC8Confirmed=False, NeedsEpaCheck=False.</td></tr><tr><td>F07-ESC9-10</td><td><span class="pill" style="background:#d9534f">High</span></td><td>Medium</td><td>Suspicious issuance needing validation</td><td>SID security extension / DC enforcement</td><td>SID-extension signals: missing=7, real mismatches=7. 6/10 readable DC row(s) show Full enforcement; unreadable=1.</td></tr><tr><td>F08-ESC1</td><td><span class="pill" style="background:#d99a00">Medium</span></td><td>High</td><td>Template / PKI posture issue</td><td>TPL_8a51cba45cc56d7160b059b2</td><td>1 published template(s) are ESC1-shaped: requester-supplied Subject/SAN, authentication-capable EKU or Any Purpose/no EKU, no manager approval, no authorized signatures, and enrollment rights present. Broad enrollment templates: 0.</td></tr><tr><td>F09-ESC8</td><td><span class="pill" style="background:#d99a00">Medium</span></td><td>Medium</td><td>Template / PKI posture issue</td><td>COMPUTER_7034fce70867a0dac7048921</td><td>Web enrollment endpoint COMPUTER_7034fce70867a0dac7048921: Scheme=https, IsHttp=False, NTLM offered=unknown, EPA=Unknown, ESC8Confirmed=False, NeedsEpaCheck=True.</td></tr><tr><td>F10-ESC8</td><td><span class="pill" style="background:#d99a00">Medium</span></td><td>Medium</td><td>Template / PKI posture issue</td><td>COMPUTER_507b264ef7a8e6eb273ef341</td><td>Web enrollment endpoint COMPUTER_507b264ef7a8e6eb273ef341: Scheme=https, IsHttp=False, NTLM offered=True, EPA=Unknown, ESC8Confirmed=False, NeedsEpaCheck=True.</td></tr></table>
+
+<h2>What to do first</h2>
+<ol><li>Validate F01-ESC5 (ESC5): Confirm whether the principal is an approved PKI/tier-0 administrator and whether each listed ACE is intentional.</li><li>Remediate F01-ESC5: Remove GenericAll/GenericWrite/WriteDacl/WriteOwner/WriteProperty from non-PKI-admin principals on the listed PKI objects; retain only explicit, documented PKI admin groups.</li><li>Validate F02-ESC1 (ESC1): Correlate the certificate serials/thumbprints or RequestIDs with DC/Kerberos certificate-authentication logs before claiming confirmed misuse.</li><li>Remediate F02-ESC1: If unexplained, revoke the certificates and tighten the issuing template&#x27;s subject/SAN, approval, signature, and enrollment settings.</li><li>Validate F03-ESC11 (ESC11): Confirm InterfaceFlags on the CA and whether ICertRequest encryption is enforced.</li><li>Remediate F03-ESC11: Enable encrypted ICertRequest enforcement and restart the CA service after validation.</li><li>Validate F04-ESC3 (ESC3): Confirm all enrollment agents are authorized and that CA Enrollment Agent restrictions limit which templates and principals they can request for.</li><li>Remediate F04-ESC3: Restrict enrollment-agent template enrollment, configure CA Enrollment Agent restrictions, and require authorized signatures on sensitive templates.</li><li>Validate F05-ESC4 (ESC4): Confirm whether the principal is an intended template/PKI administrator. Recurring control across many templates may be normal PKI administration, but should be explicitly validated.</li><li>Remediate F05-ESC4: Remove Write/Full Control/WriteDacl/WriteOwner from non-PKI-admin principals on certificate templates; use a dedicated PKI admin group.</li></ol>
+
+<h2>Controls verified clean / mitigated</h2>
+<div class="verified"><ul><li>ESC2 — 0 Any Purpose/no-EKU issued certificate row(s).</li><li>ESC6 — CA flag true on 0 CA row(s); 0 strong issuance-side SAN-attribute indicator row(s).</li><li>ESC7 — 0 CA row(s) marked ESC7Candidate.</li></ul></div>
+
+<h2>Not evaluated / missing input</h2>
+<ul><li>All supported ESC areas had at least one relevant input source.</li></ul>
+
+<h2>Recognized input files</h2>
+<ul><li>certs: exported_certs_normalized_scrubbed.csv</li><li>templates: adcs_template_inventory_scrubbed.csv</li><li>acls: adcs_pki_object_acls_scrubbed.csv</li><li>ca: adcs_ca_security_scrubbed.csv</li><li>dc: adcs_dc_enforcement_scrubbed.csv</li><li>web: adcs_web_enrollment_scrubbed.csv</li><li>hv: high_value_targets_scrubbed.csv</li></ul>
+
+<div class="foot">Companion files: <b>ADCS_Attack_Path_Graph.svg</b>, <b>ADCS_ESC_Findings.csv</b>, graph JSON, and <b>ADCS_Attack_Path.cypher</b>. PDF and PNG are included only when their optional renderers are available. Scrubbed tokens throughout - no real identities are shown.</div>
+</div>
+<script>
+function setGraphFit(fit) {
+  const graph = document.getElementById('attackGraph');
+  if (graph) graph.classList.toggle('fit', Boolean(fit));
+}
+</script>
+</body></html>

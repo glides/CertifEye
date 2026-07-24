@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "adcs-upload-manifest/v1",
+  "analysisSchemaVersion": "adcs-analysis/v1",
+  "assessmentDate": "2026-06-30",
+  "reviewRequired": true,
+  "files": [
+    "ADCS_Attack_Path.cypher",
+    "ADCS_Attack_Path_BloodHound.json",
+    "ADCS_Attack_Path_Graph.png",
+    "ADCS_Attack_Path_Graph.svg",
+    "ADCS_Attack_Path_Report.html",
+    "ADCS_ESC_Audit_Report.pdf",
+    "ADCS_ESC_Findings.csv"
+  ],
+  "artifacts": [
+    {
+      "file": "ADCS_Attack_Path.cypher",
+      "bytes": 7764,
+      "sha256": "c80ed5abf0f810e0d00d6cdce97f560bb972c9db87ab7627a56b59aecbfa8286"
+    },
+    {
+      "file": "ADCS_Attack_Path_BloodHound.json",
+      "bytes": 37929,
+      "sha256": "c602cee1e739ec34f7355f155beab74c880b9f52ad6587d977bc0854310dba2a"
+    },
+    {
+      "file": "ADCS_Attack_Path_Graph.png",
+      "bytes": 331625,
+      "sha256": "714f3ca9be7fa74fada3634cd2ec80c1c86d2525a12154a27d5e13f9b04af2bf"
+    },
+    {
+      "file": "ADCS_Attack_Path_Graph.svg",
+      "bytes": 27748,
+      "sha256": "f2c5524cd10abda8cd73daf3a62cfa8f600b4c1c8bcbbeb23221a531f81df5c3"
+    },
+    {
+      "file": "ADCS_Attack_Path_Report.html",
+      "bytes": 47821,
+      "sha256": "e00fa5b1ced7c20d24aa635fcd029ee31933a8c8f0e298fe8ba38097288fed92"
+    },
+    {
+      "file": "ADCS_ESC_Audit_Report.pdf",
+      "bytes": 307395,
+      "sha256": "851ad49ffedfa2efd66b390c7c39d8e197e84548814c7fd1c380049f10c1f106"
+    },
+    {
+      "file": "ADCS_ESC_Findings.csv",
+      "bytes": 14211,
+      "sha256": "999bf83520d9e45bb370ebefb220843e807b73f27b9c746e21129bf9be36ee6d"
+    }
+  ],
+  "inputRows": 16800,
+  "findingCount": 15,
+  "inputRoleRows": {
+    "certificates": 16800,
+    "templates": 48,
+    "pkiAces": 84,
+    "certificateAuthorities": 1,
+    "domainControllers": 12,
+    "webEndpoints": 4,
+    "highValueTokens": 64
+  },
+  "coverage": [
+    {
+      "esc": "ESC1",
+      "status": "Critical"
+    },
+    {
+      "esc": "ESC2",
+      "status": "High"
+    },
+    {
+      "esc": "ESC3",
+      "status": "Critical"
+    },
+    {
+      "esc": "ESC4",
+      "status": "High"
+    },
+    {
+      "esc": "ESC5",
+      "status": "Critical"
+    },
+    {
+      "esc": "ESC6",
+      "status": "Critical"
+    },
+    {
+      "esc": "ESC7",
+      "status": "High"
+    },
+    {
+      "esc": "ESC8",
+      "status": "Critical"
+    },
+    {
+      "esc": "ESC9/10",
+      "status": "High"
+    },
+    {
+      "esc": "ESC11",
+      "status": "High"
+    }
+  ]
+}

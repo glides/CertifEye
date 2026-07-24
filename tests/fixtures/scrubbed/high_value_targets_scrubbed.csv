@@ -1,0 +1,3 @@
+Token,HighValueReason,ObjectClass
+HV_PRINCIPAL_A,Default privileged/protected group,user
+HV_GROUP_DOMAIN_ADMINS,Default privileged/protected group,group

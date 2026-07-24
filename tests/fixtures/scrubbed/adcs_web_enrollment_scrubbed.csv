@@ -1,0 +1,2 @@
+EndpointHostName,EndpointKind,Scheme,IsHttp,AuthFromMetadata,Probed,Reachable,NtlmOffered,EpaTokenChecking,ESC8Confirmed,ESC8NeedsEpaCheck,ESC8Mitigated,Esc8RiskFromMetadata
+COMPUTER_CA_A,certsrv,http,True,Windows,True,True,True,Unknown,True,False,False,True

@@ -1,0 +1,2 @@
+TemplateName,TemplateOID,Published,SubjectOrSANSuppliedByRequester,AuthCapableOrAnyPurpose,ManagerApprovalRequired,AuthorizedSignaturesRequired,EnrollAllowPrincipals,BroadEnrollPrincipals,ESC1Candidate_AnyEnroll,ESC1Candidate_BroadEnroll,ESC4Candidate,DangerousControlNonDefaultPrincipals,EKU_OIDs
+TPL_ESC1,1.2.3.4,True,True,True,False,False,BROAD_AUTHENTICATED_USERS,BROAD_AUTHENTICATED_USERS,True,True,False,,1.3.6.1.5.5.7.3.2

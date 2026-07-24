@@ -1,0 +1,2 @@
+CA_Config,CA_CommonName,ManageCAPrincipals,ManageCertificatesPrincipals,SecuritySource,EditFlagsHex,EditF_AttributeSubjectAltName2,ESC6_CAConfigFlag,InterfaceFlagsHex,IF_EnforceEncryptICertRequest,ESC11Candidate,ESC7Candidate,SidExtensionMatchesRequester,SidMismatchLikelyBenign
+CA_CONFIG_c23be1b2f37b854b4618fa82,CA_16b1741d1aa3ea27dde7edb4,"[""HV_GROUP_dfa31e8565f27711b518c39d""]","[""HV_GROUP_af362b1085d5813c21ec8594""]",Live,0x00000000,False,False,0x00000200,True,False,False,,

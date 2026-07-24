@@ -1,0 +1,1608 @@
+{
+  "meta": {
+    "schemaVersion": "adcs-graph/v1",
+    "source": "current scrubbed AD CS findings"
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "src_ee9b94e9258b6687",
+        "kinds": [
+          "Base",
+          "User"
+        ],
+        "label": "TPL_24152c08622d161118179073",
+        "props": {
+          "kind": "Principal/Object",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "esc_f00fbdb603ce4f51",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F01-ESC1",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "dst_7a0c1bee3c297a31",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "High-value SAN target",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "src_779cba8e5cbf9d1c",
+        "kinds": [
+          "Base",
+          "User"
+        ],
+        "label": "Enrollment Agent / on-behalf-of issuance",
+        "props": {
+          "kind": "Principal/Object",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "esc_8c35a63ea68892ae",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F02-ESC3",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "dst_a9c5fefdd067d0ce",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "Enrollment Agent / on-behalf-of issuance",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "src_4c8da4a72e47c936",
+        "kinds": [
+          "Base",
+          "User"
+        ],
+        "label": "PRINCIPAL_46ee1a5d4c288f103379be2e",
+        "props": {
+          "kind": "Principal/Object",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "esc_5111d401bed4e514",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F03-ESC5",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "dst_4234ee1ffc9d14ae",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "CertificationAuthoritiesContainer;EnrollmentServiceCA;EnrollmentServicesContaine",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "src_6a994e2c889be0cc",
+        "kinds": [
+          "Base",
+          "User"
+        ],
+        "label": "CA_b98bb6a076c0a2a3695aeb65",
+        "props": {
+          "kind": "Principal/Object",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "esc_1054c7d6463b3b2b",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F04-ESC6",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "dst_d2ffe17fc665db5d",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "CA_b98bb6a076c0a2a3695aeb65",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "src_4a247050e87fb18d",
+        "kinds": [
+          "Base",
+          "User"
+        ],
+        "label": "Issued certificates with SAN request attributes",
+        "props": {
+          "kind": "Principal/Object",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "esc_0fe6f5933f9bf277",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F05-ESC6",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "dst_9e3477dbf119b593",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "Issued certificates with SAN request attributes",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "src_91e87be8c10cab30",
+        "kinds": [
+          "Base",
+          "User"
+        ],
+        "label": "COMPUTER_52de4cc85238a4adff90e787",
+        "props": {
+          "kind": "Principal/Object",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "esc_3327a9b1af15b9da",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F06-ESC8",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "dst_2662b41fa7fe693f",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "COMPUTER_52de4cc85238a4adff90e787",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "esc_b58bceb86f7f12fb",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F07-ESC1",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "dst_d78b1b6442b99c35",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "SAN target differs from requester",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "esc_b10f7af785d5cb23",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F08-ESC1",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "dst_b48d605cb698cc8f",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "TPL_24152c08622d161118179073",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "esc_20690c09cc86422d",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F09-ESC11",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "src_b74de0fc30b5d783",
+        "kinds": [
+          "Base",
+          "User"
+        ],
+        "label": "Any Purpose / no-EKU issued certificates",
+        "props": {
+          "kind": "Principal/Object",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "esc_4b0a7a3145c41bcc",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F10-ESC2",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "dst_ce16012a5b865d4d",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "Any Purpose / no-EKU issued certificates",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "src_83a24d2054ca063a",
+        "kinds": [
+          "Base",
+          "User"
+        ],
+        "label": "PRINCIPAL_ae5f81aaaa93500cdbb6aa32",
+        "props": {
+          "kind": "Principal/Object",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "esc_9dce855c079e2c1d",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F11-ESC4",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "dst_e39a095cff2bacca",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "TPL_b5b309ec40a81cc323da6fb0",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "esc_184a170dd42d0667",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F12-ESC7",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "src_05b9396bc0fd10e0",
+        "kinds": [
+          "Base",
+          "User"
+        ],
+        "label": "SID security extension / DC enforcement",
+        "props": {
+          "kind": "Principal/Object",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "esc_ce793c156c0ab9dd",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F13-ESC9-10",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "dst_10a85ddbb4c2bfa3",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "SID security extension / DC enforcement",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "src_f74c38f37d1e215c",
+        "kinds": [
+          "Base",
+          "User"
+        ],
+        "label": "COMPUTER_e0d161bfdf89f70e0a07c8f9",
+        "props": {
+          "kind": "Principal/Object",
+          "severity": "Medium"
+        }
+      },
+      {
+        "id": "esc_21e634bbb691971f",
+        "kinds": [
+          "Base",
+          "Finding"
+        ],
+        "label": "F14-ESC8",
+        "props": {
+          "kind": "ESC finding",
+          "severity": "Medium"
+        }
+      },
+      {
+        "id": "dst_ee16f29fab1cf1fe",
+        "kinds": [
+          "Base",
+          "Object"
+        ],
+        "label": "COMPUTER_e0d161bfdf89f70e0a07c8f9",
+        "props": {
+          "kind": "Impact/target",
+          "severity": "Medium"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e001",
+        "source": "src_ee9b94e9258b6687",
+        "target": "esc_f00fbdb603ce4f51",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "Critical",
+          "primitive": "Critical",
+          "esc": "ESC1",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e002",
+        "source": "esc_f00fbdb603ce4f51",
+        "target": "dst_7a0c1bee3c297a31",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC1",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e003",
+        "source": "src_779cba8e5cbf9d1c",
+        "target": "esc_8c35a63ea68892ae",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "Critical",
+          "primitive": "Critical",
+          "esc": "ESC3",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e004",
+        "source": "esc_8c35a63ea68892ae",
+        "target": "dst_a9c5fefdd067d0ce",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC3",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e005",
+        "source": "src_4c8da4a72e47c936",
+        "target": "esc_5111d401bed4e514",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "Critical",
+          "primitive": "Critical",
+          "esc": "ESC5",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e006",
+        "source": "esc_5111d401bed4e514",
+        "target": "dst_4234ee1ffc9d14ae",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC5",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e007",
+        "source": "src_6a994e2c889be0cc",
+        "target": "esc_1054c7d6463b3b2b",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "Critical",
+          "primitive": "Critical",
+          "esc": "ESC6",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e008",
+        "source": "esc_1054c7d6463b3b2b",
+        "target": "dst_d2ffe17fc665db5d",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC6",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e009",
+        "source": "src_4a247050e87fb18d",
+        "target": "esc_0fe6f5933f9bf277",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "Critical",
+          "primitive": "Critical",
+          "esc": "ESC6",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e010",
+        "source": "esc_0fe6f5933f9bf277",
+        "target": "dst_9e3477dbf119b593",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC6",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e011",
+        "source": "src_91e87be8c10cab30",
+        "target": "esc_3327a9b1af15b9da",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "Critical",
+          "primitive": "Critical",
+          "esc": "ESC8",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e012",
+        "source": "esc_3327a9b1af15b9da",
+        "target": "dst_2662b41fa7fe693f",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC8",
+          "severity": "Critical"
+        }
+      },
+      {
+        "id": "e013",
+        "source": "src_ee9b94e9258b6687",
+        "target": "esc_b58bceb86f7f12fb",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "High",
+          "primitive": "High",
+          "esc": "ESC1",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e014",
+        "source": "esc_b58bceb86f7f12fb",
+        "target": "dst_d78b1b6442b99c35",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC1",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e015",
+        "source": "src_ee9b94e9258b6687",
+        "target": "esc_b10f7af785d5cb23",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "High",
+          "primitive": "High",
+          "esc": "ESC1",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e016",
+        "source": "esc_b10f7af785d5cb23",
+        "target": "dst_b48d605cb698cc8f",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC1",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e017",
+        "source": "src_6a994e2c889be0cc",
+        "target": "esc_20690c09cc86422d",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "High",
+          "primitive": "High",
+          "esc": "ESC11",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e018",
+        "source": "esc_20690c09cc86422d",
+        "target": "dst_d2ffe17fc665db5d",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC11",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e019",
+        "source": "src_b74de0fc30b5d783",
+        "target": "esc_4b0a7a3145c41bcc",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "High",
+          "primitive": "High",
+          "esc": "ESC2",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e020",
+        "source": "esc_4b0a7a3145c41bcc",
+        "target": "dst_ce16012a5b865d4d",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC2",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e021",
+        "source": "src_83a24d2054ca063a",
+        "target": "esc_9dce855c079e2c1d",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "High",
+          "primitive": "High",
+          "esc": "ESC4",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e022",
+        "source": "esc_9dce855c079e2c1d",
+        "target": "dst_e39a095cff2bacca",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC4",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e023",
+        "source": "src_6a994e2c889be0cc",
+        "target": "esc_184a170dd42d0667",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "High",
+          "primitive": "High",
+          "esc": "ESC7",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e024",
+        "source": "esc_184a170dd42d0667",
+        "target": "dst_d2ffe17fc665db5d",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC7",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e025",
+        "source": "src_05b9396bc0fd10e0",
+        "target": "esc_ce793c156c0ab9dd",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "High",
+          "primitive": "High",
+          "esc": "ESC9/10",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e026",
+        "source": "esc_ce793c156c0ab9dd",
+        "target": "dst_10a85ddbb4c2bfa3",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC9/10",
+          "severity": "High"
+        }
+      },
+      {
+        "id": "e027",
+        "source": "src_f74c38f37d1e215c",
+        "target": "esc_21e634bbb691971f",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "Medium",
+          "primitive": "Medium",
+          "esc": "ESC8",
+          "severity": "Medium"
+        }
+      },
+      {
+        "id": "e028",
+        "source": "esc_21e634bbb691971f",
+        "target": "dst_ee16f29fab1cf1fe",
+        "type": "ADCS_ESC_EDGE",
+        "kind": "ABUSABLE",
+        "props": {
+          "label": "can enable",
+          "primitive": "can enable",
+          "esc": "ESC8",
+          "severity": "Medium"
+        }
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "src_ee9b94e9258b6687",
+      "kinds": [
+        "Base",
+        "User"
+      ],
+      "label": "TPL_24152c08622d161118179073",
+      "props": {
+        "kind": "Principal/Object",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "esc_f00fbdb603ce4f51",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F01-ESC1",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "dst_7a0c1bee3c297a31",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "High-value SAN target",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "src_779cba8e5cbf9d1c",
+      "kinds": [
+        "Base",
+        "User"
+      ],
+      "label": "Enrollment Agent / on-behalf-of issuance",
+      "props": {
+        "kind": "Principal/Object",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "esc_8c35a63ea68892ae",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F02-ESC3",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "dst_a9c5fefdd067d0ce",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "Enrollment Agent / on-behalf-of issuance",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "src_4c8da4a72e47c936",
+      "kinds": [
+        "Base",
+        "User"
+      ],
+      "label": "PRINCIPAL_46ee1a5d4c288f103379be2e",
+      "props": {
+        "kind": "Principal/Object",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "esc_5111d401bed4e514",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F03-ESC5",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "dst_4234ee1ffc9d14ae",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "CertificationAuthoritiesContainer;EnrollmentServiceCA;EnrollmentServicesContaine",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "src_6a994e2c889be0cc",
+      "kinds": [
+        "Base",
+        "User"
+      ],
+      "label": "CA_b98bb6a076c0a2a3695aeb65",
+      "props": {
+        "kind": "Principal/Object",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "esc_1054c7d6463b3b2b",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F04-ESC6",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "dst_d2ffe17fc665db5d",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "CA_b98bb6a076c0a2a3695aeb65",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "src_4a247050e87fb18d",
+      "kinds": [
+        "Base",
+        "User"
+      ],
+      "label": "Issued certificates with SAN request attributes",
+      "props": {
+        "kind": "Principal/Object",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "esc_0fe6f5933f9bf277",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F05-ESC6",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "dst_9e3477dbf119b593",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "Issued certificates with SAN request attributes",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "src_91e87be8c10cab30",
+      "kinds": [
+        "Base",
+        "User"
+      ],
+      "label": "COMPUTER_52de4cc85238a4adff90e787",
+      "props": {
+        "kind": "Principal/Object",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "esc_3327a9b1af15b9da",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F06-ESC8",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "dst_2662b41fa7fe693f",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "COMPUTER_52de4cc85238a4adff90e787",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "esc_b58bceb86f7f12fb",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F07-ESC1",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "dst_d78b1b6442b99c35",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "SAN target differs from requester",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "esc_b10f7af785d5cb23",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F08-ESC1",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "dst_b48d605cb698cc8f",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "TPL_24152c08622d161118179073",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "esc_20690c09cc86422d",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F09-ESC11",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "src_b74de0fc30b5d783",
+      "kinds": [
+        "Base",
+        "User"
+      ],
+      "label": "Any Purpose / no-EKU issued certificates",
+      "props": {
+        "kind": "Principal/Object",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "esc_4b0a7a3145c41bcc",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F10-ESC2",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "dst_ce16012a5b865d4d",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "Any Purpose / no-EKU issued certificates",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "src_83a24d2054ca063a",
+      "kinds": [
+        "Base",
+        "User"
+      ],
+      "label": "PRINCIPAL_ae5f81aaaa93500cdbb6aa32",
+      "props": {
+        "kind": "Principal/Object",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "esc_9dce855c079e2c1d",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F11-ESC4",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "dst_e39a095cff2bacca",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "TPL_b5b309ec40a81cc323da6fb0",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "esc_184a170dd42d0667",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F12-ESC7",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "src_05b9396bc0fd10e0",
+      "kinds": [
+        "Base",
+        "User"
+      ],
+      "label": "SID security extension / DC enforcement",
+      "props": {
+        "kind": "Principal/Object",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "esc_ce793c156c0ab9dd",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F13-ESC9-10",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "dst_10a85ddbb4c2bfa3",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "SID security extension / DC enforcement",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "src_f74c38f37d1e215c",
+      "kinds": [
+        "Base",
+        "User"
+      ],
+      "label": "COMPUTER_e0d161bfdf89f70e0a07c8f9",
+      "props": {
+        "kind": "Principal/Object",
+        "severity": "Medium"
+      }
+    },
+    {
+      "id": "esc_21e634bbb691971f",
+      "kinds": [
+        "Base",
+        "Finding"
+      ],
+      "label": "F14-ESC8",
+      "props": {
+        "kind": "ESC finding",
+        "severity": "Medium"
+      }
+    },
+    {
+      "id": "dst_ee16f29fab1cf1fe",
+      "kinds": [
+        "Base",
+        "Object"
+      ],
+      "label": "COMPUTER_e0d161bfdf89f70e0a07c8f9",
+      "props": {
+        "kind": "Impact/target",
+        "severity": "Medium"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e001",
+      "source": "src_ee9b94e9258b6687",
+      "target": "esc_f00fbdb603ce4f51",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "Critical",
+        "primitive": "Critical",
+        "esc": "ESC1",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e002",
+      "source": "esc_f00fbdb603ce4f51",
+      "target": "dst_7a0c1bee3c297a31",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC1",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e003",
+      "source": "src_779cba8e5cbf9d1c",
+      "target": "esc_8c35a63ea68892ae",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "Critical",
+        "primitive": "Critical",
+        "esc": "ESC3",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e004",
+      "source": "esc_8c35a63ea68892ae",
+      "target": "dst_a9c5fefdd067d0ce",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC3",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e005",
+      "source": "src_4c8da4a72e47c936",
+      "target": "esc_5111d401bed4e514",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "Critical",
+        "primitive": "Critical",
+        "esc": "ESC5",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e006",
+      "source": "esc_5111d401bed4e514",
+      "target": "dst_4234ee1ffc9d14ae",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC5",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e007",
+      "source": "src_6a994e2c889be0cc",
+      "target": "esc_1054c7d6463b3b2b",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "Critical",
+        "primitive": "Critical",
+        "esc": "ESC6",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e008",
+      "source": "esc_1054c7d6463b3b2b",
+      "target": "dst_d2ffe17fc665db5d",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC6",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e009",
+      "source": "src_4a247050e87fb18d",
+      "target": "esc_0fe6f5933f9bf277",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "Critical",
+        "primitive": "Critical",
+        "esc": "ESC6",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e010",
+      "source": "esc_0fe6f5933f9bf277",
+      "target": "dst_9e3477dbf119b593",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC6",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e011",
+      "source": "src_91e87be8c10cab30",
+      "target": "esc_3327a9b1af15b9da",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "Critical",
+        "primitive": "Critical",
+        "esc": "ESC8",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e012",
+      "source": "esc_3327a9b1af15b9da",
+      "target": "dst_2662b41fa7fe693f",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC8",
+        "severity": "Critical"
+      }
+    },
+    {
+      "id": "e013",
+      "source": "src_ee9b94e9258b6687",
+      "target": "esc_b58bceb86f7f12fb",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "High",
+        "primitive": "High",
+        "esc": "ESC1",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e014",
+      "source": "esc_b58bceb86f7f12fb",
+      "target": "dst_d78b1b6442b99c35",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC1",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e015",
+      "source": "src_ee9b94e9258b6687",
+      "target": "esc_b10f7af785d5cb23",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "High",
+        "primitive": "High",
+        "esc": "ESC1",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e016",
+      "source": "esc_b10f7af785d5cb23",
+      "target": "dst_b48d605cb698cc8f",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC1",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e017",
+      "source": "src_6a994e2c889be0cc",
+      "target": "esc_20690c09cc86422d",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "High",
+        "primitive": "High",
+        "esc": "ESC11",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e018",
+      "source": "esc_20690c09cc86422d",
+      "target": "dst_d2ffe17fc665db5d",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC11",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e019",
+      "source": "src_b74de0fc30b5d783",
+      "target": "esc_4b0a7a3145c41bcc",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "High",
+        "primitive": "High",
+        "esc": "ESC2",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e020",
+      "source": "esc_4b0a7a3145c41bcc",
+      "target": "dst_ce16012a5b865d4d",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC2",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e021",
+      "source": "src_83a24d2054ca063a",
+      "target": "esc_9dce855c079e2c1d",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "High",
+        "primitive": "High",
+        "esc": "ESC4",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e022",
+      "source": "esc_9dce855c079e2c1d",
+      "target": "dst_e39a095cff2bacca",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC4",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e023",
+      "source": "src_6a994e2c889be0cc",
+      "target": "esc_184a170dd42d0667",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "High",
+        "primitive": "High",
+        "esc": "ESC7",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e024",
+      "source": "esc_184a170dd42d0667",
+      "target": "dst_d2ffe17fc665db5d",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC7",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e025",
+      "source": "src_05b9396bc0fd10e0",
+      "target": "esc_ce793c156c0ab9dd",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "High",
+        "primitive": "High",
+        "esc": "ESC9/10",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e026",
+      "source": "esc_ce793c156c0ab9dd",
+      "target": "dst_10a85ddbb4c2bfa3",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC9/10",
+        "severity": "High"
+      }
+    },
+    {
+      "id": "e027",
+      "source": "src_f74c38f37d1e215c",
+      "target": "esc_21e634bbb691971f",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "Medium",
+        "primitive": "Medium",
+        "esc": "ESC8",
+        "severity": "Medium"
+      }
+    },
+    {
+      "id": "e028",
+      "source": "esc_21e634bbb691971f",
+      "target": "dst_ee16f29fab1cf1fe",
+      "type": "ADCS_ESC_EDGE",
+      "kind": "ABUSABLE",
+      "props": {
+        "label": "can enable",
+        "primitive": "can enable",
+        "esc": "ESC8",
+        "severity": "Medium"
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+DC_DnsHostName,StrongCertificateBindingEnforcement,EnforcementLevel,FullEnforcement,ReadStatus,ReadMethod,ReadDetail,SidExtensionMatchesRequester,SidMismatchLikelyBenign
+COMPUTER_43e908c025466c2124583a87,2,Full,True,OK,RemoteRegistry,READ_OK,,
+COMPUTER_48fc939696d5b50843b20527,2,Full,True,Live,WinRM,READ_OK,,
+COMPUTER_12ab612b504a84bfcd52d4dd,2,Full,True,OK,RemoteRegistry,READ_OK,,
+COMPUTER_fb0c07e1d638368d0f155b82,2,Full,True,Live,WinRM,READ_OK,,
+COMPUTER_624b59801f566414c412ca66,2,Full,True,OK,RemoteRegistry,READ_OK,,
+COMPUTER_ecf347800903cad87331424f,2,Full,True,Live,WinRM,READ_OK,,
+COMPUTER_fb60d067eeebdbf094f36865,1,Compatibility,False,OK,RemoteRegistry,READ_OK,,
+COMPUTER_28758d4a428f9a7efb2c4534,1,Compatibility,False,Live,WinRM,READ_OK,,
+COMPUTER_340a2a8429e88c628bfbd399,1,Compatibility,False,OK,RemoteRegistry,READ_OK,,
+COMPUTER_caf4f1f5b69c267afab0422e,1,Compatibility,False,Live,WinRM,READ_OK,,
+COMPUTER_f323911c2f4d1003da0ac439,,,,Unreadable,RemoteRegistry,ACCESS_DENIED,,

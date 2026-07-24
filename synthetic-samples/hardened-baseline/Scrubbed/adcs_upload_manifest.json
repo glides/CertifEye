@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "adcs-upload-manifest/v1",
+  "scenarioSchemaVersion": "certifeye-synthetic-scenario/v1",
+  "tool": "CertifEye",
+  "synthetic": true,
+  "scenario": "hardened-baseline",
+  "description": "Readable, intentionally hardened posture with benign, denied, and parse-error negative controls.",
+  "assessmentDate": "2026-06-30",
+  "evidenceWindow": {
+    "first": "2023-07-01",
+    "last": "2026-06-30",
+    "days": 1095
+  },
+  "tokenContractVersion": "synthetic-opaque/v1",
+  "hmacLength": 24,
+  "reviewRequired": true,
+  "files": [
+    {
+      "file": "adcs_template_inventory_scrubbed.csv",
+      "role": "adcs_template_inventory",
+      "rows": 46,
+      "bytes": 16823,
+      "sha256": "65fc00bcc2bd46a466596f4d5054f9274cae226084b13b4f38ded6e04f97237a"
+    },
+    {
+      "file": "exported_certs_normalized_scrubbed.csv",
+      "role": "exported_certs_normalized",
+      "rows": 15500,
+      "bytes": 9885185,
+      "sha256": "69710c45483c9afb41a0c223f92531b69fcb569e7048e640c911cabcd62dbf3e"
+    },
+    {
+      "file": "adcs_pki_object_acls_scrubbed.csv",
+      "role": "adcs_pki_object_acls",
+      "rows": 76,
+      "bytes": 14294,
+      "sha256": "b3fe611f812bac6c81c43bb1b62366f0ffd5f615772b3037e8d0e190881e9118"
+    },
+    {
+      "file": "adcs_ca_security_scrubbed.csv",
+      "role": "adcs_ca_security",
+      "rows": 1,
+      "bytes": 486,
+      "sha256": "8b6bb772388cba64acdf74f31bcb5ce520a16a277b206a959503a9a5dd7c1e21"
+    },
+    {
+      "file": "adcs_dc_enforcement_scrubbed.csv",
+      "role": "adcs_dc_enforcement",
+      "rows": 10,
+      "bytes": 886,
+      "sha256": "4e7ae3eff692a86522887a38d3329b512ffd2f027718b36a8f5980d24ba055be"
+    },
+    {
+      "file": "adcs_web_enrollment_scrubbed.csv",
+      "role": "adcs_web_enrollment",
+      "rows": 3,
+      "bytes": 840,
+      "sha256": "37ce425a43ebd0ca897a989aff20cafc0838407ed0b32efdcfcf361149df5a4d"
+    },
+    {
+      "file": "high_value_targets_scrubbed.csv",
+      "role": "high_value_targets",
+      "rows": 60,
+      "bytes": 4695,
+      "sha256": "f8542c38dc10ea50b8de5267a430ea937ceb876d924195ff6faf29e9ea69e321"
+    }
+  ],
+  "warnings": [
+    "SYNTHETIC_DATA_ONLY",
+    "NO_TOKEN_MAP_EXISTS"
+  ]
+}

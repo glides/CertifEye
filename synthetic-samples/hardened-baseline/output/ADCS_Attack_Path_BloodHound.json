@@ -1,0 +1,12 @@
+{
+  "meta": {
+    "schemaVersion": "adcs-graph/v1",
+    "source": "current scrubbed AD CS findings"
+  },
+  "graph": {
+    "nodes": [],
+    "edges": []
+  },
+  "nodes": [],
+  "edges": []
+}

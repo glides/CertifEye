@@ -1,0 +1,11 @@
+DC_DnsHostName,StrongCertificateBindingEnforcement,EnforcementLevel,FullEnforcement,ReadStatus,ReadMethod,ReadDetail,SidExtensionMatchesRequester,SidMismatchLikelyBenign
+COMPUTER_90477a73918319167721c1f7,2,Full,True,OK,RemoteRegistry,READ_OK,,
+COMPUTER_be41b3644d493977f083320f,2,Full,True,Live,WinRM,READ_OK,,
+COMPUTER_7acf7aa01de8e516b3c8d51d,2,Full,True,OK,RemoteRegistry,READ_OK,,
+COMPUTER_b6046e6ca361a4cf801c1496,2,Full,True,Live,WinRM,READ_OK,,
+COMPUTER_23c34170a3831c3380802569,2,Full,True,OK,RemoteRegistry,READ_OK,,
+COMPUTER_bae05ddf42f3124f57a04372,2,Full,True,Live,WinRM,READ_OK,,
+COMPUTER_282959895239c8c6f00a57e6,2,Full,True,OK,RemoteRegistry,READ_OK,,
+COMPUTER_98bf8d526d54eea105aa78cf,2,Full,True,Live,WinRM,READ_OK,,
+COMPUTER_68b66fe91b26b66050844a7c,2,Full,True,OK,RemoteRegistry,READ_OK,,
+COMPUTER_6fe0b48eed45c3c841fd333b,2,Full,True,Live,WinRM,READ_OK,,

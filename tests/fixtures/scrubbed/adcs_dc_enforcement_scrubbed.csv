@@ -1,0 +1,2 @@
+DC_DnsHostName,StrongCertificateBindingEnforcement,EnforcementLevel,FullEnforcement,ReadStatus,ReadMethod,ReadDetail
+COMPUTER_DC_A,1,Compatibility,False,OK,RemoteRegistry,RemoteRegistry=OK
