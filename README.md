@@ -5,6 +5,10 @@ needs, scrubs it, and hands you upload-safe CSVs. It consolidates the whole pipe
 issued-certificate export, template inventory, CA / PKI / DC / web-enrollment posture,
 identity token-mapping, and leak-hardening — into a single prompt-driven tool.
 
+<p align="center">
+  <img src="docs/assets/certifeye-interactive-console.svg" alt="CertifEye interactive console preview" width="920">
+</p>
+
 > **This collector produces UNSCRUBBED files first, then scrubs them.** Only the
 > `*_scrubbed.csv` files and `high_value_targets_scrubbed.csv` are safe to share.
 > The token map (`adcs_token_map_DO_NOT_UPLOAD.csv`) is secret — never upload it.

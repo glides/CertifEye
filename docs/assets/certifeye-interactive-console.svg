@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="360" viewBox="0 0 1180 360" role="img" aria-labelledby="title desc">
+  <title id="title">CertifEye interactive console preview</title>
+  <desc id="desc">A styled terminal window preview showing CertifEye interactive commands for planning, collecting, analyzing, and validating a privacy-preserving AD CS assessment.</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="135%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+    <linearGradient id="terminalBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0f14"/>
+      <stop offset="1" stop-color="#050607"/>
+    </linearGradient>
+    <linearGradient id="titleBar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#101820"/>
+      <stop offset="1" stop-color="#0b1220"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="28" y="24" width="1124" height="308" rx="16" fill="url(#terminalBg)" stroke="#2f81f7" stroke-width="1.4" filter="url(#shadow)"/>
+  <rect x="28" y="24" width="1124" height="54" rx="16" fill="url(#titleBar)"/>
+  <path d="M 28 78 H 1152" stroke="#2f81f7" stroke-width="1.1" opacity="0.85"/>
+  <circle cx="54" cy="51" r="6" fill="#ff5f56"/>
+  <circle cx="76" cy="51" r="6" fill="#ffbd2e"/>
+  <circle cx="98" cy="51" r="6" fill="#27c93f"/>
+  <text x="126" y="57" font-family="Consolas, 'Cascadia Mono', 'Courier New', monospace" font-size="16" font-weight="700" fill="#ff00ff">[&gt;_] CertifEye</text>
+  <text x="820" y="57" font-family="Consolas, 'Cascadia Mono', 'Courier New', monospace" font-size="13" fill="#8b949e">Privacy-preserving AD CS assessment.</text>
+
+  <g font-family="Consolas, 'Cascadia Mono', 'Courier New', monospace" font-size="16">
+    <text x="62" y="108">
+      <tspan fill="#ffffff">(</tspan><tspan fill="#ff00ff">CertifEye</tspan><tspan fill="#ffffff">)</tspan><tspan fill="#0aa6a6"> &gt;</tspan><tspan fill="#ffffff"> options</tspan>
+    </text>
+
+    <text x="62" y="146" fill="#39c5ff">─── Current session options ──────────────────────────────────────────────</text>
+    <text x="62" y="174" fill="#7ee7ff">WorkDir</text>
+    <text x="210" y="174" fill="#f0f6fc">C:\Assessments\CertifEye</text>
+    <text x="62" y="200" fill="#7ee7ff">Stage</text>
+    <text x="210" y="200" fill="#f0f6fc">All</text>
+    <text x="62" y="226" fill="#7ee7ff">SaltFile</text>
+    <text x="210" y="226" fill="#f0f6fc">C:\Secure\assessment.salt</text>
+    <text x="62" y="252" fill="#7ee7ff">Collection</text>
+    <text x="210" y="252" fill="#f0f6fc">Read-only; raw evidence stays local</text>
+    <text x="62" y="278" fill="#7ee7ff">Package</text>
+    <text x="210" y="278" fill="#f0f6fc">Scrubbed evidence for offline or optional AI review</text>
+    <text x="62" y="314">
+      <tspan fill="#ffffff">(</tspan><tspan fill="#ff00ff">CertifEye</tspan><tspan fill="#ffffff">)</tspan><tspan fill="#0aa6a6"> &gt;</tspan><tspan fill="#ffffff"> plan</tspan><tspan fill="#8b949e">   Preview work before collection.</tspan>
+    </text>
+  </g>
+</svg>
