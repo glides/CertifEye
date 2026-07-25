@@ -31,12 +31,9 @@ Generate all reports from the repository root:
 Use `-Replace` only when you intentionally want to overwrite that demo output.
 Use `-IncludeQa` to request the optional montage step.
 
-`scenario_expectations.json` is the versioned regression contract. Rebuild the
-CSV packages deterministically with:
-
-```powershell
-python .\CertifEye\tools\New-CertifEyeSyntheticScenarios.py
-```
+`scenario_expectations.json` is the versioned regression contract. The checked-in
+packages are ready to run; fixture-generation and release-packaging helpers are
+maintainer-local tools and are not required for normal operation.
 
 Do not place customer data, raw exports, salts, token maps, or private manifests
 in this directory.
